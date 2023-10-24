@@ -18,3 +18,8 @@ Set up a github repository for the files, build in an updater function to downlo
 during a CIU meeting, get input on the structure of the warrant
 
 re-address cellphone/electronics search warrant terms
+
+
+Property reasons: create a column of checkboxes, variable names within an array. Corresponding source files should be generated in a child folder. Options should only appear when necessary?
+
+Consider a large placeholder variable for reasons and property etc - build one big variable from all the little ones and then submit a single render request
