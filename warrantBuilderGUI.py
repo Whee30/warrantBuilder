@@ -6,10 +6,10 @@ from docxtpl import DocxTemplate
 # YouTube tutorial for these functions
 # https://www.youtube.com/watch?v=fziZXbeaegc
 
-Sg.theme('DarkGray')
+Sg.theme('DarkAmber')
 
 # Where the source template file lives
-templatePath = Path(__file__).parent / "WarrantSkeleton.docx"
+templatePath = Path(__file__).parent / "sources/WarrantSkeleton.docx"
 # Output file variable
 docOut = DocxTemplate(templatePath)
 
@@ -18,15 +18,12 @@ resSrc = open('./sources/residence.txt').read()
 vehSrc = open('./sources/vehicle.txt').read()
 socSrc = open('./sources/social.txt').read()
 TandESrc = open('./sources/TandE.txt').read()
+cellSrc = open('./sources/cellphone.txt').read()
+narcSrc = open('./sources/narcotics.txt').read()
+compSrc = open('./sources/computer.txt').read()
+fraudSrc = open('./sources/fraud.txt').read()
 
 county = 'Pima'
-
-# Defines options in a multi-select list
-s = (
-    "Cellphones",
-    "Residences",
-    "Vehicles"
-    )
 
 # Tuple containing reasons, checkboxes will call these
 r = (
@@ -46,120 +43,198 @@ serviceTime = (
     "In the nighttime"
 )
 
-serviceIndex = ['s0','s1']
+serviceIndex = 0
+
+common_verbiage = {
+    'v_cellphone':cellSrc,
+    'v_computer':compSrc,
+    'v_residence':resSrc,
+    'v_social':socSrc,
+    'v_narcotics':narcSrc,
+    'v_fraud':fraudSrc
+}
 
 rIndex = ['0','1','2','3','4','5']
 
-
-
+# This variable will hold the property reason checkbox values
 rHolder = ''''''
+
+# This variable holds the common verbiage additions
+vHolder = ''''''
 
 # Define available ranks for the dropdown
 ranks = ["Ofc.", "Det.", "Sgt."]
+
 # Define available courts for the dropdown
 courts = ["Oro Valley Magistrate Court", "Pima County Superior Court", "Pima County Justice Court"]
 
 # This is the section of the layout that contain the date range buttons
 dateCols = [
-    [Sg.vtop(Sg.Text("Date Range:", size=(10, 1)))],
-    [Sg.CalendarButton(button_text="Start Date", key="STARTTIME", format='%a %B %d, %Y', target='START_TIME'),
+    [Sg.Text("Date Range:", size=(10, 1))],
+    [Sg.CalendarButton(button_text="Start Date", size=(10, 1), key="STARTTIME", format='%A %B %d, %Y', target='START_TIME', pad=10),
      Sg.Input(key="START_TIME", default_text="From", size=(25, 1))],
-
-    [Sg.CalendarButton(button_text="End Date", key="ENDTIME", format='%a %B %d, %Y', target='END_TIME'),
+    [Sg.CalendarButton(button_text="End Date", key="ENDTIME", size=(10, 1), format='%a %B %d, %Y', target='END_TIME', pad=10),
      Sg.Input(key="END_TIME", default_text="To", size=(25, 1))]
 ]
 
-# This is the section of the layout that contains the majority of the input fields
-column1 = [
-    [Sg.vtop(Sg.Text('Warrant Builder v0.1 (beta)', size=(50, 2), font=("Arial", 20)))],
+possession_column = [
+    [Sg.Text('In possession of:', size=(12, 1))],
+    [Sg.Multiline(key="SUSPECT", size=(30, 5), pad=10)]
+]
 
+residence_column = [
+    [Sg.Text('On Premises:', size=(10, 1))],
+    [Sg.Multiline(key="PREMISES", size=(30, 5), pad=10)]
+]
+
+vehicle_column = [
+    [Sg.Text('In Vehicle(s):', size=(10, 1))],
+    [Sg.Multiline(key="VEHICLE", size=(30, 5), pad=10)]
+]
+
+property_column = [
+    [Sg.Text("Property Sought:", size=(12, 1))],
+    [Sg.Multiline(key="PROPERTY", size=(100, 10), pad=10)]
+]
+
+crime_column = [
+    [Sg.Text("Crimes:", size=(12, 1))],
+    [Sg.Multiline(key="CRIMES", size=(50, 5), pad=10)]
+]
+
+affidavit_column = [
+    [Sg.Text("Affidavit:", size=(12, 1), pad=10)],
+    [Sg.Multiline(key="AFFIDAVIT", size=(100, 10), pad=10)]
+]
+
+# Column containing form
+scroll_column = [[
+    Sg.vtop(Sg.Text('Warrant Builder v0.1 (beta)', 
+    size=(50, 2), 
+    font=("Arial", 20)))],
+
+# Affiant info block
     [Sg.Text('Rank:'),
-     Sg.Combo(ranks, key='RANK', default_value=ranks[1]),
+     Sg.Combo(ranks, key='RANK', default_value=ranks[1], pad=10),
      Sg.Text('Name:'),
-     Sg.Input(key="NAME", size=(10, 1)),
+     Sg.Input(key="NAME", size=(10, 1), pad=10),
      Sg.Text('Badge #:'),
      Sg.Input(key="BADGE", size=(10, 1), default_text="V"),
      Sg.Text('Case Number:', size=(12, 1)),
-     Sg.Input(key="CASENUM", size=(20, 1), default_text="V")
+     Sg.Input(key="CASENUM", size=(20, 1), default_text="V", pad=10),
      ],
 
+# Jurisdiction block
     [Sg.Text('Court:'),
      Sg.Combo(courts, key='COURT', default_value=courts[0]),
      Sg.Text('Judge:'),
      Sg.Input(key="JUDGE", size=(20, 1))
      ],
 
-    [Sg.vtop(Sg.Text('In possession of:', size=(12, 1))),
-     Sg.Multiline(key="SUSPECT", size=(20, 4)),
-     Sg.vtop(Sg.Text('On Premises:', size=(10, 1))),
-     Sg.Multiline(key="PREMISES", size=(20, 4)),
-     Sg.vtop(Sg.Text('In Vehicle(s):', size=(10, 1))),
-     Sg.Multiline(key="VEHICLE", size=(20, 4))
+    [Sg.HorizontalSeparator(color='black', pad=20)],
+
+# People/Places/Vehicles block
+    [Sg.Column(possession_column),
+     Sg.Column(residence_column),
+     Sg.Column(vehicle_column)     
      ],
 
-    [Sg.vtop(Sg.Text("Property Sought:", size=(12, 1))),
-     Sg.Multiline(key="PROPERTY", size=(90, 10))
+# Property block
+    [Sg.Column(property_column)],
+
+# Common verbiage block
+    [Sg.vtop(Sg.Text("Common Verbiage:", pad=10)),
+     Sg.Checkbox("Cellphone", key='v_cellphone'),
+     Sg.Checkbox("Computer", key='v_computer'),
+     Sg.Checkbox("Residence", key='v_residence'),
+     Sg.Checkbox("SocialMedia", key='v_social'),
+     Sg.Checkbox("Narcotics", key='v_narcotics'),
+     Sg.Checkbox("Fraud", key='v_fraud')
      ],
 
-    [Sg.vtop(Sg.Text("Common \nVerbiage:", size=(12, 2))),
-     Sg.Checkbox("CellPhones", key='s1'),
-     Sg.Checkbox("Computers", key='s2'),
-     Sg.Checkbox("Residence", key='s3'),
-     Sg.Checkbox("SocialMedia", key='s4'),
-     Sg.Checkbox("Narcotics", key='s5'),
-     Sg.Checkbox("Fraud", key='s6')
-     ],
+# Statutes block
+    [Sg.Column(crime_column),
+     Sg.vtop(Sg.Column(dateCols))],
 
-    [Sg.vtop(Sg.Text("Crimes:", size=(12, 1))),
-     Sg.Multiline(key="CRIMES", size=(40, 5)),
-     Sg.Column(dateCols)],
+# Affidavit block
+    [Sg.Column(affidavit_column)],
 
-    [Sg.vtop(Sg.Text("Affidavit:", size=(12, 1))),
-     Sg.Multiline(key="AFFIDAVIT", size=(90, 10))],
-
+# Checkboxes for property reasons
     [Sg.Checkbox(text=r[0], key='0', size=(90, 2))],
     [Sg.Checkbox(text=r[1], key='1', size=(90, 2))],
     [Sg.Checkbox(text=r[2], key='2', size=(90, 2))],
     [Sg.Checkbox(text=r[3], key='3', size=(90, 2))],
     [Sg.Checkbox(text=r[4], key='4', size=(90, 2))],
     [Sg.Checkbox(text=r[5], key='5', size=(90, 2))],
-    [Sg.Radio(text=serviceTime[0], key='dayService', size=(90, 2), group_id='serviceTime')],
-    [Sg.Radio(text=serviceTime[1], key='nightService', size=(90, 2), group_id='serviceTime')],
-    [Sg.Text('Nighttime Justification:'), Sg.Input(key="NIGHTTIME_JUSTIFICATION")],
-    [Sg.Button("Generate Warrant"), Sg.Exit()],
+
+    [Sg.HorizontalSeparator(color='black', pad=10)],
+
+# Day/night service radio buttons
+    [Sg.Radio(text=serviceTime[0], key='DAYTIME', 
+              size=(90, 2), group_id='radio_service', default=True, enable_events=True)],
+    [Sg.Radio(text=serviceTime[1], key='NIGHTTIME', 
+              size=(90, 2), group_id='radio_service', enable_events=True)],
+    [Sg.Text('Nighttime Justification:', key="night_text"),
+     Sg.Input(key="NIGHTTIME_JUSTIFICATION", disabled=True, default_text='')],
+
+    [Sg.HorizontalSeparator(color='black', pad=10)],
+
+# Form buttons
+    [Sg.Stretch(), Sg.Button("Generate Warrant", size=(20, 1)), Sg.Stretch(), Sg.Exit(button_text='Exit', size=(20, 1)), Sg.Stretch()],
 
 # Hidden values placed here
     [Sg.Input(key='PROPERTY_REASONS', visible=False)],
-    [Sg.Input(key='TRAININGEXPERIENCE', visible=False)]
+    [Sg.Input(key='TRAININGEXPERIENCE', visible=False)],
+    [Sg.Input(key='SERVICETIME', visible=False)],
+    [Sg.Input(key='COMMON_VERBIAGE', visible=False)]
 ]
 
 
+layout = [[
+    Sg.Column(
+        scroll_column, 
+        scrollable=True, 
+        vertical_scroll_only=True, 
+        size=(980, 790))
+    ]]
 
-layout = [
-    [Sg.Column(column1, scrollable=True, vertical_scroll_only=True, size=(1000, 790))]
-]
-
-window = Sg.Window("Warrant Builder V0.1", layout, size=(1010, 800), resizable=True, font=("Arial", 11))
+window = Sg.Window(
+    "Warrant Builder V0.1", 
+    layout, 
+    size=(1010, 800), 
+    resizable=True, 
+    font=("Arial", 11)
+    )
 
 # Rules that govern what happens when you press buttons
 while True:
     event, values = window.read()
     if event == Sg.WIN_CLOSED or event == "Exit":
         break
+# daytime/nighttime radio button events
+    if event == 'NIGHTTIME':
+        window['NIGHTTIME_JUSTIFICATION'].update(disabled = False)
+    if event == 'DAYTIME':
+        window['NIGHTTIME_JUSTIFICATION'].update('')
+        window['NIGHTTIME_JUSTIFICATION'].update(disabled = True)
     if event == "Generate Warrant":
-# Check whether or not the boxes are checked and then output the value if True. Adds
-# the values to a variable and then commits the variable to the hidden text element
+# Property reason For loop
         for check in rIndex:
             if window[check].Get() == True:
-                rHolder = rHolder + window[check].Text + '\n'
-        # for check in serviceIndex:
-        #     if window[check].Get() == True:
-        #         rHolder = rHolder + window[check].Text + '\n'
-# Set the value of PROPERTY_REASONS to the values from the checkboxes
+                rHolder = rHolder + window[check].Text + '\n\n'
+# Common verbiage For loop
+        for each_check, data_source in common_verbiage.items():
+            if window[each_check].Get() == True:
+                vHolder = vHolder + data_source + '\n\n'
+        values['COMMON_VERBIAGE'] = vHolder
         values['PROPERTY_REASONS'] = rHolder
-# Set remaining values for static variables
         values['TRAININGEXPERIENCE'] = TandESrc
         values['COUNTY'] = county
+        if window['DAYTIME'].Get() == True:
+            serviceIndex = 0
+        elif window['NIGHTTIME'].Get() == True:
+            serviceIndex = 1
+        values['SERVICETIME'] = serviceTime[serviceIndex]
         docOut.render(values)
         output_path = Path(__file__).parent / f"./output/{values['CASENUM']}-search warrant.docx"
         docOut.save(output_path)
