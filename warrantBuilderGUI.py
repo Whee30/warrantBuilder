@@ -2,16 +2,26 @@
 import PySimpleGUI as Sg
 from pathlib import Path
 from docxtpl import DocxTemplate
+import os
 
-# YouTube tutorial for these functions
+Sg.theme('Dark')
+
+# Check for required directories
+if os.path.exists('./output') == False:
+    os.mkdir('./output')
+    Sg.popup("Output directory was missing, created new output directory at warrantBuilder/output/")
+if os.path.exists('./sources') == False:
+    Sg.popup("You are missing the WarrantBuilder/sources/ directory! You need to re-download or re-extract the package. This program will now exit.")
+
+# YouTube tutorial for these docxtple functions
 # https://www.youtube.com/watch?v=fziZXbeaegc
 
-Sg.theme('DarkAmber')
-
 # Where the source template file lives
-templatePath = Path(__file__).parent / "sources/WarrantSkeleton.docx"
+# templatePath = Path(__file__).parent / "sources/WarrantSkeleton.docx"
+templatePath = "./sources/WarrantSkeleton.docx"
 # Output file variable
 docOut = DocxTemplate(templatePath)
+
 
 # Assign the content of the source files to variables
 resSrc = open('./sources/residence.txt').read()
@@ -73,7 +83,7 @@ dateCols = [
     [Sg.Text("Date Range:", size=(10, 1))],
     [Sg.CalendarButton(button_text="Start Date", size=(10, 1), key="STARTTIME", format='%A %B %d, %Y', target='START_TIME', pad=10),
      Sg.Input(key="START_TIME", default_text="From", size=(25, 1))],
-    [Sg.CalendarButton(button_text="End Date", key="ENDTIME", size=(10, 1), format='%a %B %d, %Y', target='END_TIME', pad=10),
+    [Sg.CalendarButton(button_text="End Date", key="ENDTIME", size=(10, 1), format='%A %B %d, %Y', target='END_TIME', pad=10),
      Sg.Input(key="END_TIME", default_text="To", size=(25, 1))]
 ]
 
@@ -236,7 +246,7 @@ while True:
             serviceIndex = 1
         values['SERVICETIME'] = serviceTime[serviceIndex]
         docOut.render(values)
-        output_path = Path(__file__).parent / f"./output/{values['CASENUM']}-search warrant.docx"
+        output_path = f"./output/{values['CASENUM']}-search warrant.docx"
         docOut.save(output_path)
         Sg.popup("Warrant built, don't forget to proofread!", f"File has been saved to: {output_path}")
         break
