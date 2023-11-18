@@ -4,7 +4,7 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 import os
 
-Sg.theme('Dark')
+Sg.theme('DarkGrey')
 
 # Check for required directories
 if os.path.exists('./output') == False:
