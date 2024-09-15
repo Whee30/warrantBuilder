@@ -3,6 +3,7 @@ import PySimpleGUI as Sg
 from pathlib import Path
 from docxtpl import DocxTemplate
 import os
+from datetime import datetime
 
 # Check for required directories
 if os.path.exists('./output') == False:
@@ -50,8 +51,8 @@ r = (
 
 # Day or night warrant service
 serviceTime = (
-    "In the daytime (excluding the time period between 10:00 p.m and 6:30 a.m)",
-    "In the nighttime"
+    "in the daytime (excluding the time period between 10:00 p.m and 6:30 a.m)",
+    "in the nighttime, good cause having been shown."
 )
 
 serviceIndex = 0
@@ -94,6 +95,16 @@ def establishSources():
     fraudSrc = open('./sources/fraud.txt').read()
     acquireSrc = open('./sources/acquire.txt').read()
 
+# This function will apply the appropriate date suffix "1st", "2nd", "3rd", "4th" etc.
+def dateSuffix(day):
+    if 4 <= day <= 20 or 24 <= day <=30:
+        return str(day) + 'th'
+    elif day == 1 or day == 21 or day == 31:
+        return str(day) + 'st'
+    elif day == 2 or day == 22:
+        return str(day) + 'nd'
+    elif day == 3 or day == 23:
+        return str(day) + 'rd'
 
 # This is the section of the layout that contain the date range buttons
 # Need to add a function to test if the inputs are the same to not repeat them in the warrant.
@@ -215,7 +226,10 @@ scroll_column = [[
     [Sg.Input(key='TRAININGEXPERIENCE', visible=False)],
     [Sg.Input(key='SERVICETIME', visible=False)],
     [Sg.Input(key='COMMON_VERBIAGE', visible=False)],
-    [Sg.Input(key='ON_OR_BETWEEN', visible=False)]
+    [Sg.Input(key='ON_OR_BETWEEN', visible=False)],
+    [Sg.Input(key='DAY_NUMBER', visible=False)],
+    [Sg.Input(key='MONTH', visible=False)],
+    [Sg.Input(key='YEAR', visible=False)]
 ]
 
 
@@ -256,7 +270,7 @@ while True:
         for each_check, data_source in common_verbiage.items():
             if window[each_check].Get() == True:
                 vHolder = vHolder + data_source + '\n\n'
-        if window['v_cellphone'] or window['v_computer'] == True:
+        if window['v_cellphone'].Get() == True or window['v_computer'].Get() == True:
             vHolder = vHolder + acquireSrc + '\n\n'
         values['COMMON_VERBIAGE'] = vHolder
         values['PROPERTY_REASONS'] = rHolder
@@ -266,8 +280,8 @@ while True:
             serviceIndex = 0
         elif window['NIGHTTIME'].Get() == True:
             serviceIndex = 1
+# Establish proper grammar with daytime vs nighttime service
         values['SERVICETIME'] = serviceTime[serviceIndex]
-        # Establish a variable to assign proper grammar to the start/end times
         if values['START_TIME'] == values['END_TIME']:
             values['ON_OR_BETWEEN'] = f"on {values['START_TIME']}"
         elif values['START_TIME'] != "From" and values['END_TIME'] == "To":
@@ -278,6 +292,9 @@ while True:
             values['ON_OR_BETWEEN'] = "OFFENSE DATE NEEDED"
         else:
             values['ON_OR_BETWEEN'] = f"between {values['START_TIME']} and {values['END_TIME']}"
+        values['DAY_NUMBER'] = dateSuffix(datetime.now().day)
+        values['MONTH'] = datetime.now().strftime('%B')
+        values['YEAR'] = datetime.now().year
         docOut.render(values)
         output_path = f"./output/{values['CASENUM']}-search warrant.docx"
         docOut.save(output_path)
