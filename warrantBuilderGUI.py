@@ -4,38 +4,38 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 import os
 
-Sg.theme('DarkGrey')
-
 # Check for required directories
 if os.path.exists('./output') == False:
     os.mkdir('./output')
     Sg.popup("Output directory was missing, created new output directory at warrantBuilder/output/")
 if os.path.exists('./sources') == False:
-    Sg.popup("You are missing the WarrantBuilder/sources/ directory! You need to re-download or re-extract the package. This program will now exit.")
+    Sg.popup("You are missing the WarrantBuilder/sources/ directory! You need to re-download the package or run the update program if you have it. This program will now exit.")
 
-# YouTube tutorial for these docxtple functions
-# https://www.youtube.com/watch?v=fziZXbeaegc
-
+# Variable definition time!
 # Where the source template file lives
-# templatePath = Path(__file__).parent / "sources/WarrantSkeleton.docx"
 templatePath = "./sources/WarrantSkeleton.docx"
+
 # Output file variable
 docOut = DocxTemplate(templatePath)
 
-
-# Assign the content of the source files to variables
-resSrc = open('./sources/residence.txt').read()
-vehSrc = open('./sources/vehicle.txt').read()
+# populate the source variables on program load
 socSrc = open('./sources/social.txt').read()
 TandESrc = open('./sources/TandE.txt').read()
 cellSrc = open('./sources/cellphone.txt').read()
 narcSrc = open('./sources/narcotics.txt').read()
 compSrc = open('./sources/computer.txt').read()
 fraudSrc = open('./sources/fraud.txt').read()
+acquireSrc = open('./sources/acquire.txt').read()
 
+# The default county for the warrants
 county = 'Pima'
 
+# Establish the "On or Between" verbiage for offense date
+onOrBetween = ''
+
 # Tuple containing reasons, checkboxes will call these
+# YouTube tutorial for these docxtple functions
+# https://www.youtube.com/watch?v=fziZXbeaegc
 r = (
     "Were stolen or embezzled.",
     "Were used as a means for committing a public offense.",
@@ -48,6 +48,7 @@ r = (
     " , 20 in the County of Pima, State of Arizona.",
     )
 
+# Day or night warrant service
 serviceTime = (
     "In the daytime (excluding the time period between 10:00 p.m and 6:30 a.m)",
     "In the nighttime"
@@ -56,12 +57,11 @@ serviceTime = (
 serviceIndex = 0
 
 common_verbiage = {
-    'v_cellphone':cellSrc,
-    'v_computer':compSrc,
-    'v_residence':resSrc,
     'v_social':socSrc,
     'v_narcotics':narcSrc,
-    'v_fraud':fraudSrc
+    'v_fraud':fraudSrc,
+    'v_cellphone':cellSrc,
+    'v_computer':compSrc
 }
 
 rIndex = ['0','1','2','3','4','5']
@@ -78,7 +78,26 @@ ranks = ["Ofc.", "Det.", "Sgt."]
 # Define available courts for the dropdown
 courts = ["Oro Valley Magistrate Court", "Pima County Superior Court", "Pima County Justice Court"]
 
+# Establish theme based on theme.txt content
+theme_selection = open('./sources/theme.txt').read()
+Sg.theme(theme_selection)
+
+# Assign the content of the source files to variables (again) after the "Generate" button is clicked.
+# This was necessary because in testing, users were editing the source files while the program was
+# already running and confused as to why changes were not reflected.
+def establishSources():
+    socSrc = open('./sources/social.txt').read()
+    TandESrc = open('./sources/TandE.txt').read()
+    cellSrc = open('./sources/cellphone.txt').read()
+    narcSrc = open('./sources/narcotics.txt').read()
+    compSrc = open('./sources/computer.txt').read()
+    fraudSrc = open('./sources/fraud.txt').read()
+    acquireSrc = open('./sources/acquire.txt').read()
+
+
 # This is the section of the layout that contain the date range buttons
+# Need to add a function to test if the inputs are the same to not repeat them in the warrant.
+# Likely generate a whole phrase... if two inputs "Between $1 and $2", if one input "On $1"
 dateCols = [
     [Sg.Text("Date Range:", size=(10, 1))],
     [Sg.CalendarButton(button_text="Start Date", size=(10, 1), key="STARTTIME", format='%A %B %d, %Y', target='START_TIME', pad=10),
@@ -156,10 +175,9 @@ scroll_column = [[
     [Sg.vtop(Sg.Text("Common Verbiage:", pad=10)),
      Sg.Checkbox("Cellphone", key='v_cellphone'),
      Sg.Checkbox("Computer", key='v_computer'),
-     Sg.Checkbox("Residence", key='v_residence'),
      Sg.Checkbox("SocialMedia", key='v_social'),
      Sg.Checkbox("Narcotics", key='v_narcotics'),
-     Sg.Checkbox("Fraud", key='v_fraud')
+     Sg.Checkbox("Fraud/Identity Theft", key='v_fraud')
      ],
 
 # Statutes block
@@ -196,7 +214,8 @@ scroll_column = [[
     [Sg.Input(key='PROPERTY_REASONS', visible=False)],
     [Sg.Input(key='TRAININGEXPERIENCE', visible=False)],
     [Sg.Input(key='SERVICETIME', visible=False)],
-    [Sg.Input(key='COMMON_VERBIAGE', visible=False)]
+    [Sg.Input(key='COMMON_VERBIAGE', visible=False)],
+    [Sg.Input(key='ON_OR_BETWEEN', visible=False)]
 ]
 
 
@@ -228,6 +247,7 @@ while True:
         window['NIGHTTIME_JUSTIFICATION'].update('')
         window['NIGHTTIME_JUSTIFICATION'].update(disabled = True)
     if event == "Generate Warrant":
+        establishSources()
 # Property reason For loop
         for check in rIndex:
             if window[check].Get() == True:
@@ -236,6 +256,8 @@ while True:
         for each_check, data_source in common_verbiage.items():
             if window[each_check].Get() == True:
                 vHolder = vHolder + data_source + '\n\n'
+        if window['v_cellphone'] or window['v_computer'] == True:
+            vHolder = vHolder + acquireSrc + '\n\n'
         values['COMMON_VERBIAGE'] = vHolder
         values['PROPERTY_REASONS'] = rHolder
         values['TRAININGEXPERIENCE'] = TandESrc
@@ -245,6 +267,17 @@ while True:
         elif window['NIGHTTIME'].Get() == True:
             serviceIndex = 1
         values['SERVICETIME'] = serviceTime[serviceIndex]
+        # Establish a variable to assign proper grammar to the start/end times
+        if values['START_TIME'] == values['END_TIME']:
+            values['ON_OR_BETWEEN'] = f"on {values['START_TIME']}"
+        elif values['START_TIME'] != "From" and values['END_TIME'] == "To":
+            values['ON_OR_BETWEEN'] = f"on {values['START_TIME']}"
+        elif values['START_TIME'] == "From" and values['END_TIME'] != "To":
+            values['ON_OR_BETWEEN'] = f"on {values['END_TIME']}"
+        elif values['START_TIME'] == "From" and values['END_TIME'] == "To":
+            values['ON_OR_BETWEEN'] = "OFFENSE DATE NEEDED"
+        else:
+            values['ON_OR_BETWEEN'] = f"between {values['START_TIME']} and {values['END_TIME']}"
         docOut.render(values)
         output_path = f"./output/{values['CASENUM']}-search warrant.docx"
         docOut.save(output_path)
