@@ -45,8 +45,8 @@ r = (
     "being discovered.",
     "Consists of any item or constitutes any evidence which tends to show that a public offense has been committed,"
     " or tends to show that a particular person committed the public offense.",
-    "The person sought is the subject of an outstanding arrest warrant which offense occurred on or about the day of"
-    " , 20 in the County of Pima, State of Arizona.",
+    "The person sought is the subject of an outstanding arrest warrant which offense occurred on or about the ___ day of"
+    " _________, 20__ in the County of Pima, State of Arizona.",
     )
 
 # Day or night warrant service
