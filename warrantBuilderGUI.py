@@ -295,7 +295,7 @@ while True:
         values['DAY_NUMBER'] = dateSuffix(datetime.now().day)
         values['MONTH'] = datetime.now().strftime('%B')
         values['YEAR'] = datetime.now().year
-        docOut.render(values)
+        docOut.render(values, autoescape=True)
         output_path = f"./output/{values['CASENUM']}-search warrant.docx"
         docOut.save(output_path)
         Sg.popup("Warrant built, don't forget to proofread!", f"File has been saved to: {output_path}")
