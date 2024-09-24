@@ -1,9 +1,10 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMessageBox, QFormLayout, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QCalendarWidget, QScrollArea, QDateEdit
+from PyQt6.QtWidgets import QApplication, QMessageBox, QStyleFactory, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QCalendarWidget, QScrollArea, QDateEdit
 from PyQt6.QtGui import QPalette, QColor
 from PyQt6.QtCore import Qt, QDate
 from pathlib import Path
 from docxtpl import DocxTemplate
+from qt_material import apply_stylesheet
 import os
 
 # This script functions. It can likely be cleaned up quite a bit, but it works.
@@ -24,7 +25,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Warrant Builder v2.0")
 
         # Minimum size is proving problematic with spacing. Disabling until I figure it out.
-        self.setMinimumSize(810,800)
+        self.setFixedSize(810,800)
         #self.setMaximumHeight(400)
 
         # Establish the tab position and settings
@@ -78,7 +79,7 @@ class MainWindow(QMainWindow):
 
         self.v['PROPERTY'] = QTextEdit()
         self.v['PROPERTY'].setPlaceholderText("List specific property sought. Choose items from the 'common verbiage' tab, if relevant.")
-        self.v['PROPERTY'].setFixedSize(770,200)
+        self.v['PROPERTY'].setFixedSize(763,200)
 
         self.v['CRIMES'] = QTextEdit()
         self.v['CRIMES'].setPlaceholderText("List crimes investigated, including statute")
@@ -98,7 +99,7 @@ class MainWindow(QMainWindow):
 
         self.v['AFFIDAVIT'] = QTextEdit()
         self.v['AFFIDAVIT'].setPlaceholderText("Enter Affidavit details here")
-        self.v['AFFIDAVIT'].setFixedSize(770,300)
+        self.v['AFFIDAVIT'].setFixedSize(763,300)
 
         # r(0)-r(5), reasons for warrant
         self.r = [
@@ -134,17 +135,21 @@ class MainWindow(QMainWindow):
         divider = QFrame()
         divider.setFrameShape(QFrame.Shape.HLine)
         divider.setFrameShadow(QFrame.Shadow.Sunken)
+        divider.setFixedWidth(763)
 
         submitButton = QPushButton()
         submitButton.setText("Submit")
+        submitButton.setProperty('class', 'success')
         submitButton.clicked.connect( self.submitForm )
 
         clearButton = QPushButton()
         clearButton.setText("Reset Form")
+        clearButton.setProperty('class', 'danger')
         clearButton.clicked.connect( self.clearForm )
 
         quitButton = QPushButton()
         quitButton.setText("Quit Program")
+        quitButton.setProperty('class', 'danger')
         quitButton.clicked.connect( self.quitForm )
 
 
@@ -322,15 +327,25 @@ class MainWindow(QMainWindow):
 
         result = confirmation_box.exec()
 
+        
         if result == QMessageBox.StandardButton.Yes:
             # Gather the field input and build a dictionary
-            context = {
-                key: widget.text() if isinstance(widget, QLineEdit) else widget.currentText()
-                for key, widget in self.v.items()
-            }
+            context = {}
+            for key, widget in self.v.items():
+                if isinstance(self.v[key], QComboBox):
+                    context[key] = widget.currentText()
+                elif isinstance(self.v[key], QLineEdit | QCheckBox):
+                    context[key] = widget.text()
+                elif isinstance(self.v[key], QTextEdit):
+                    context[key] = widget.toPlainText()
+                elif isinstance(self.v[key], QDateEdit):
+                    context[key] = widget.date().toString()
+                else:
+                    print("You haven't supported this type of widget yet")
             docOut.render(context, autoescape=True)
             output_path = f"./output/{self.v['CASENUM'].text()}-report.docx"
             docOut.save(output_path)
+            window.close()
         else:
             print("Action Canceled")
     
@@ -381,6 +396,7 @@ class Color(QWidget):
 
 
 app = QApplication(sys.argv)
+apply_stylesheet(app, theme='dark_purple.xml')
 
 window = MainWindow()
 window.show()
