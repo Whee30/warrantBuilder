@@ -431,8 +431,11 @@ class MainWindow(QMainWindow):
                     context[key] = widget.currentText()
                 elif isinstance(self.v[key], QLineEdit):
                     context[key] = widget.text()
+                # This needs to be tuned. Currently it grabs ALL checkbox values for the reasons. 
+                # Need to eliminate conflict with daytime/nighttime
                 elif isinstance(self.v[key], QCheckBox):
-                    self.rHolder = self.rHolder + widget.text() + '\n\n'
+                    if self.v[key].isChecked() == True:
+                        self.rHolder = self.rHolder + widget.text() + '\n\n'
                 elif isinstance(self.v[key], QTextEdit):
                     context[key] = widget.toPlainText()
                 elif isinstance(self.v[key], QDateEdit):
@@ -445,6 +448,7 @@ class MainWindow(QMainWindow):
                     #print(widget.date().day())
                     #print(widget.date().month())
                     #print(widget.date().year())
+                    print(self.rHolder)
                     #print("The date you entered was " + context[f'{key}MONTH'] + ' ' + context[f'{key}DAY_NUMBER'] + ', ' + str(context[f'{key}YEAR']))
                 else:
                     print("You haven't supported this type of widget yet")
