@@ -9,12 +9,56 @@ import os
 
 # This script functions. It can likely be cleaned up quite a bit, but it works.
 
-# Variable definition time!
+
+# Check for required directories
+if os.path.exists('./output') == False:
+    os.mkdir('./output')
+    Sg.popup("Output directory was missing, created new output directory at warrantBuilder/output/")
+if os.path.exists('./sources') == False:
+    Sg.popup("You are missing the WarrantBuilder/sources/ directory! You need to re-download the package or run the update program if you have it. This program will now exit.")
+
+TandESrc = open('./sources/TandE.txt').read()
+
 # Where the source template file lives
 templatePath = "./sources/skeleton.docx"
 
 # Output file variable
 docOut = DocxTemplate(templatePath)
+
+# The default county for the warrants
+county = 'Pima'
+
+# Establish the "On or Between" verbiage for offense date
+onOrBetween = ''
+
+# Day or night warrant service
+serviceTime = (
+    "in the daytime (excluding the time period between 10:00 p.m and 6:30 a.m)",
+    "in the nighttime, good cause having been shown."
+)
+
+serviceIndex = 0
+
+
+rIndex = ['0','1','2','3','4','5']
+
+
+
+# This variable holds the common verbiage additions
+vHolder = ''''''
+    
+# Hidden values from previous form that need addressing
+'''
+key='PROPERTY_REASONS'
+key='TRAININGEXPERIENCE'
+key='SERVICETIME'
+key='COMMON_VERBIAGE'
+key='ON_OR_BETWEEN'
+key='DAY_NUMBER'
+key='MONTH'
+key='YEAR'
+'''
+
 
 class MainWindow(QMainWindow):
 
@@ -27,6 +71,9 @@ class MainWindow(QMainWindow):
         # Minimum size is proving problematic with spacing. Disabling until I figure it out.
         self.setFixedSize(810,800)
         #self.setMaximumHeight(400)
+
+        # This variable will hold the property reason checkbox values
+        self.rHolder = ''''''
 
         # Establish the tab position and settings
         tabs = QTabWidget()
@@ -87,7 +134,8 @@ class MainWindow(QMainWindow):
 
         self.v['DATE1'] = QDateEdit()
         self.v['DATE1'].setCalendarPopup(True)
-        self.v['DATE1'].setDate(QDate().currentDate())
+        self.v['DATE1'].setDate(QDate().currentDate())        
+        self.v['DATE1'].setButtonSymbols(self.v['DATE1'].ButtonSymbols.NoButtons)
 
         rangeCheck = QCheckBox("Enable Date Range?")
         rangeCheck.clicked.connect(self.date_range_enable)
@@ -95,6 +143,7 @@ class MainWindow(QMainWindow):
         self.v['DATE2'] = QDateEdit()
         self.v['DATE2'].setCalendarPopup(True)
         self.v['DATE2'].setDate(QDate().currentDate())
+        self.v['DATE2'].setButtonSymbols(self.v['DATE2'].ButtonSymbols.NoButtons)
         self.v['DATE2'].setDisabled(True)
 
         self.v['AFFIDAVIT'] = QTextEdit()
@@ -112,12 +161,17 @@ class MainWindow(QMainWindow):
             "The person sought is the subject of an outstanding warrant, which offense occurred on or about the ___ day of ______, ____"
         ]
 
-        self.v['REASON0'] = QCheckBox()
-        self.v['REASON1'] = QCheckBox()
-        self.v['REASON2'] = QCheckBox()
-        self.v['REASON3'] = QCheckBox()
-        self.v['REASON4'] = QCheckBox()
-        self.v['REASON5'] = QCheckBox()
+        for index, item in enumerate(self.r):
+            self.v[f'REASON{index}'] = QCheckBox()
+            self.v[f'REASON{index}'].setText(item)
+
+        #self.v['REASON0'] = QCheckBox()
+        #self.v['REASON0'].setText(self.r[0])
+        #self.v['REASON1'] = QCheckBox()
+        #self.v['REASON2'] = QCheckBox()
+        #self.v['REASON3'] = QCheckBox()
+        #self.v['REASON4'] = QCheckBox()
+        #self.v['REASON5'] = QCheckBox()
 
         self.v['DAYTIME'] = QCheckBox()
         self.v['DAYTIME'].setText("In the Daytime, excluding the time period between 10pm and 6:30am.")
@@ -144,7 +198,7 @@ class MainWindow(QMainWindow):
 
         clearButton = QPushButton()
         clearButton.setText("Reset Form")
-        clearButton.setProperty('class', 'danger')
+        clearButton.setProperty('class', 'warning')
         clearButton.clicked.connect( self.clearForm )
 
         quitButton = QPushButton()
@@ -248,20 +302,20 @@ class MainWindow(QMainWindow):
         mainTabLayout.addWidget(QLabel("Property Sought:"))
         mainTabLayout.addWidget(self.v['PROPERTY'])
 
-        mainTabLayout.addWidget(reasonWidget)
+        #mainTabLayout.addWidget(reasonWidget)
 
-        reasonLayout.addWidget(self.v['REASON0'],0,0)
-        reasonLayout.addWidget(QLabel(self.r[0]),0,1)
-        reasonLayout.addWidget(self.v['REASON1'],1,0)
-        reasonLayout.addWidget(QLabel(self.r[1]),1,1)
-        reasonLayout.addWidget(self.v['REASON2'],2,0)
-        reasonLayout.addWidget(QLabel(self.r[2]),2,1)
-        reasonLayout.addWidget(self.v['REASON3'],3,0)
-        reasonLayout.addWidget(QLabel(self.r[3]),3,1)
-        reasonLayout.addWidget(self.v['REASON4'],4,0)
-        reasonLayout.addWidget(QLabel(self.r[4]),4,1)
-        reasonLayout.addWidget(self.v['REASON5'],5,0)
-        reasonLayout.addWidget(QLabel(self.r[5]),5,1)
+        mainTabLayout.addWidget(self.v['REASON0'])
+        #reasonLayout.addWidget(QLabel(self.r[0]),0,1)
+        mainTabLayout.addWidget(self.v['REASON1'])
+        #reasonLayout.addWidget(QLabel(self.r[1]),1,1)
+        mainTabLayout.addWidget(self.v['REASON2'])
+        #reasonLayout.addWidget(QLabel(self.r[2]),2,1)
+        mainTabLayout.addWidget(self.v['REASON3'])
+        #reasonLayout.addWidget(QLabel(self.r[3]),3,1)
+        mainTabLayout.addWidget(self.v['REASON4'])
+        #reasonLayout.addWidget(QLabel(self.r[4]),4,1)
+        mainTabLayout.addWidget(self.v['REASON5'])
+        #reasonLayout.addWidget(QLabel(self.r[5]),5,1)
 
         mainTabLayout.addWidget(divider)
 
@@ -318,6 +372,17 @@ class MainWindow(QMainWindow):
         elif i == False:
             self.v['NIGHTJUSTIFY'].setDisabled(True)
 
+    # This function will apply the appropriate date suffix "1st", "2nd", "3rd", "4th" etc.
+    def dateSuffix(self, day):
+        if 4 <= day <= 20 or 24 <= day <=30:
+            return str(day) + 'th'
+        elif day == 1 or day == 21 or day == 31:
+            return str(day) + 'st'
+        elif day == 2 or day == 22:
+            return str(day) + 'nd'
+        elif day == 3 or day == 23:
+            return str(day) + 'rd'
+
     def submitForm(self):
         confirmation_box = QMessageBox()
         confirmation_box.setIcon(QMessageBox.Icon.Question)
@@ -329,22 +394,76 @@ class MainWindow(QMainWindow):
 
         
         if result == QMessageBox.StandardButton.Yes:
+            
+            ''' Old block needs adapting
+            # Property reason For loop
+            for check in rIndex:
+                if window[check].Get() == True:
+                    rHolder = rHolder + window[check].Text + '\n\n'
+            
+            # Common verbiage For loop
+            for each_check, data_source in common_verbiage.items():
+                if window[each_check].Get() == True:
+                    vHolder = vHolder + data_source + '\n\n'
+            
+            # One date or a date range
+            if values['START_TIME'] == values['END_TIME']:
+                values['ON_OR_BETWEEN'] = f"on {values['START_TIME']}"
+            elif values['START_TIME'] != "From" and values['END_TIME'] == "To":
+                values['ON_OR_BETWEEN'] = f"on {values['START_TIME']}"
+            elif values['START_TIME'] == "From" and values['END_TIME'] != "To":
+                values['ON_OR_BETWEEN'] = f"on {values['END_TIME']}"
+            elif values['START_TIME'] == "From" and values['END_TIME'] == "To":
+                values['ON_OR_BETWEEN'] = "OFFENSE DATE NEEDED"
+            else:
+                values['ON_OR_BETWEEN'] = f"between {values['START_TIME']} and {values['END_TIME']}"
+            
+            # Apply the appropriate grammar to the dates
+            values['DAY_NUMBER'] = dateSuffix(datetime.now().day)
+            values['MONTH'] = datetime.now().strftime('%B')
+            values['YEAR'] = datetime.now().year
+            '''
+            
             # Gather the field input and build a dictionary
             context = {}
             for key, widget in self.v.items():
                 if isinstance(self.v[key], QComboBox):
                     context[key] = widget.currentText()
-                elif isinstance(self.v[key], QLineEdit | QCheckBox):
+                elif isinstance(self.v[key], QLineEdit):
                     context[key] = widget.text()
+                elif isinstance(self.v[key], QCheckBox):
+                    self.rHolder = self.rHolder + widget.text() + '\n\n'
                 elif isinstance(self.v[key], QTextEdit):
                     context[key] = widget.toPlainText()
                 elif isinstance(self.v[key], QDateEdit):
+                    #context[key] = widget.date()
                     context[key] = widget.date().toString()
+                    context[f'{key}DAY_NUMBER'] = self.dateSuffix(widget.date().day())
+                    context[f'{key}MONTH'] = widget.date().toString('MMMM')
+                    context[f'{key}YEAR'] = widget.date().year()
+                    #print(context[key])
+                    #print(widget.date().day())
+                    #print(widget.date().month())
+                    #print(widget.date().year())
+                    #print("The date you entered was " + context[f'{key}MONTH'] + ' ' + context[f'{key}DAY_NUMBER'] + ', ' + str(context[f'{key}YEAR']))
                 else:
                     print("You haven't supported this type of widget yet")
-            docOut.render(context, autoescape=True)
-            output_path = f"./output/{self.v['CASENUM'].text()}-report.docx"
-            docOut.save(output_path)
+            #docOut.render(context, autoescape=True)
+            #output_path = f"./output/{self.v['CASENUM'].text()}-warrant.docx"
+            #docOut.save(output_path)
+
+            # Confirmation QMessageBox()
+            #messageComplete = QMessageBox()
+            #messageComplete.setIcon(QMessageBox.Icon.Information)
+            #messageComplete.setWindowTitle("Warrant Generated Successfully!")
+            #messageComplete.setText(f"The warrant was built successfully! It has been saved to warrantBuilder/output/{self.v['CASENUM'].text()}-warrant.docx. Don't forget to proofread!")
+            #messageComplete.setStandardButtons(QMessageBox.StandardButton.Ok)
+            #messageComplete.exec()
+
+            print(self.rHolder)
+
+            # Close window - comment out if second shot at generation is wanted?
+            # If keeping window open, consider checking filename to see if exists and iterate by 1 to avoid crashes
             window.close()
         else:
             print("Action Canceled")
