@@ -9,62 +9,59 @@ import os
 
 # This script functions. It can likely be cleaned up quite a bit, but it works.
 
-
-# Check for required directories
-if os.path.exists('./output') == False:
-    os.mkdir('./output')
-    Sg.popup("Output directory was missing, created new output directory at warrantBuilder/output/")
-if os.path.exists('./sources') == False:
-    Sg.popup("You are missing the WarrantBuilder/sources/ directory! You need to re-download the package or run the update program if you have it. This program will now exit.")
-
-TandESrc = open('./sources/TandE.txt').read()
-
-# Where the source template file lives
-templatePath = "./sources/skeleton.docx"
-
-# Output file variable
-docOut = DocxTemplate(templatePath)
-
-# The default county for the warrants
-county = 'Pima'
-
-# Establish the "On or Between" verbiage for offense date
-onOrBetween = ''
-
-# Day or night warrant service
-serviceTime = (
-    "in the daytime (excluding the time period between 10:00 p.m and 6:30 a.m)",
-    "in the nighttime, good cause having been shown."
-)
-
-serviceIndex = 0
-
-
-rIndex = ['0','1','2','3','4','5']
-
-
-
-# This variable holds the common verbiage additions
-vHolder = ''''''
-    
-# Hidden values from previous form that need addressing
-'''
-key='PROPERTY_REASONS'
-key='TRAININGEXPERIENCE'
-key='SERVICETIME'
-key='COMMON_VERBIAGE'
-key='ON_OR_BETWEEN'
-key='DAY_NUMBER'
-key='MONTH'
-key='YEAR'
-'''
-
-
 class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
 
+
+        
+        self.TandESrc = open('./sources/TandE.txt').read()
+
+        # Where the source template file lives
+        self.templatePath = "./sources/skeleton.docx"
+
+        # Output file variable
+        self.docOut = DocxTemplate(self.templatePath)
+
+        # The default county for the warrants
+        self.county = 'Pima'
+
+        # Establish the "On or Between" verbiage for offense date
+        self.onOrBetween = ''
+
+        # Day or night warrant service
+        self.serviceTime = (
+            "in the daytime (excluding the time period between 10:00 p.m and 6:30 a.m)",
+            "in the nighttime, good cause having been shown."
+        )
+
+        self.serviceIndex = 0
+
+        # This variable holds the common verbiage additions
+        self.vHolder = ''''''
+            
+        # Hidden values from previous form that need addressing
+        
+        #key='PROPERTY_REASONS'
+        #key='TRAININGEXPERIENCE'
+        #key='SERVICETIME'
+        #key='COMMON_VERBIAGE'
+        #key='ON_OR_BETWEEN'
+        #key='DAY_NUMBER'
+        #key='MONTH'
+        #key='YEAR'
+        
+
+        # Check for required directories
+        '''
+        if os.path.exists('./output') == False:
+            os.mkdir('./output')
+            Sg.popup("Output directory was missing, created new output directory at warrantBuilder/output/")
+        if os.path.exists('./sources') == False:
+            Sg.popup("You are missing the WarrantBuilder/sources/ directory! You need to re-download the package or run the update program if you have it. This program will now exit.")        
+        '''
+            
         # Establish the window geometry
         self.setWindowTitle("Warrant Builder v2.0")
 
@@ -137,8 +134,8 @@ class MainWindow(QMainWindow):
         self.v['DATE1'].setDate(QDate().currentDate())        
         self.v['DATE1'].setButtonSymbols(self.v['DATE1'].ButtonSymbols.NoButtons)
 
-        rangeCheck = QCheckBox("Enable Date Range?")
-        rangeCheck.clicked.connect(self.date_range_enable)
+        self.rangeCheck = QCheckBox("Enable Date Range?")
+        self.rangeCheck.clicked.connect(self.date_range_enable)
 
         self.v['DATE2'] = QDateEdit()
         self.v['DATE2'].setCalendarPopup(True)
@@ -329,7 +326,7 @@ class MainWindow(QMainWindow):
         crimeCol2Layout.addWidget(QLabel("Occurred on:"))
         crimeCol2Layout.addStretch()
         crimeCol2Layout.addWidget(self.v['DATE1'])
-        crimeCol2Layout.addWidget(rangeCheck)
+        crimeCol2Layout.addWidget(self.rangeCheck)
         crimeCol2Layout.addWidget(QLabel("For a range, choose an end date:"))
         crimeCol2Layout.addWidget(self.v['DATE2'])
         crimeCol2Layout.addStretch()
@@ -344,7 +341,6 @@ class MainWindow(QMainWindow):
         mainTabLayout.addWidget(self.v['NIGHTJUSTIFY'])
 
         mainTabLayout.addWidget(buttonWidget)
-
 
         buttonLayout.addWidget(submitButton)
         buttonLayout.addWidget(clearButton)
@@ -396,16 +392,6 @@ class MainWindow(QMainWindow):
         if result == QMessageBox.StandardButton.Yes:
             
             ''' Old block needs adapting
-            # Property reason For loop
-            for check in rIndex:
-                if window[check].Get() == True:
-                    rHolder = rHolder + window[check].Text + '\n\n'
-            
-            # Common verbiage For loop
-            for each_check, data_source in common_verbiage.items():
-                if window[each_check].Get() == True:
-                    vHolder = vHolder + data_source + '\n\n'
-            
             # One date or a date range
             if values['START_TIME'] == values['END_TIME']:
                 values['ON_OR_BETWEEN'] = f"on {values['START_TIME']}"
@@ -418,10 +404,6 @@ class MainWindow(QMainWindow):
             else:
                 values['ON_OR_BETWEEN'] = f"between {values['START_TIME']} and {values['END_TIME']}"
             
-            # Apply the appropriate grammar to the dates
-            values['DAY_NUMBER'] = dateSuffix(datetime.now().day)
-            values['MONTH'] = datetime.now().strftime('%B')
-            values['YEAR'] = datetime.now().year
             '''
             
             # Gather the field input and build a dictionary
@@ -431,30 +413,29 @@ class MainWindow(QMainWindow):
                     context[key] = widget.currentText()
                 elif isinstance(self.v[key], QLineEdit):
                     context[key] = widget.text()
-                # This needs to be tuned. Currently it grabs ALL checkbox values for the reasons. 
-                # Need to eliminate conflict with daytime/nighttime
                 elif isinstance(self.v[key], QCheckBox):
-                    if self.v[key].isChecked() == True:
-                        self.rHolder = self.rHolder + widget.text() + '\n\n'
+                    context[key] = widget.text()
                 elif isinstance(self.v[key], QTextEdit):
                     context[key] = widget.toPlainText()
                 elif isinstance(self.v[key], QDateEdit):
-                    #context[key] = widget.date()
-                    context[key] = widget.date().toString()
+                    # Not needed?
+                    context[key] = widget.date().toString() 
                     context[f'{key}DAY_NUMBER'] = self.dateSuffix(widget.date().day())
                     context[f'{key}MONTH'] = widget.date().toString('MMMM')
                     context[f'{key}YEAR'] = widget.date().year()
-                    #print(context[key])
-                    #print(widget.date().day())
-                    #print(widget.date().month())
-                    #print(widget.date().year())
-                    print(self.rHolder)
+                    # Prints the formatted date to check the above function
                     #print("The date you entered was " + context[f'{key}MONTH'] + ' ' + context[f'{key}DAY_NUMBER'] + ', ' + str(context[f'{key}YEAR']))
                 else:
                     print("You haven't supported this type of widget yet")
-            #docOut.render(context, autoescape=True)
-            #output_path = f"./output/{self.v['CASENUM'].text()}-warrant.docx"
-            #docOut.save(output_path)
+
+                ''' This block will establish if checkboxes are checked. This is where distinguising daytime and nighttime from reasons and verbiage is important.
+                if self.v[key].isChecked() == True:
+                    self.rHolder = self.rHolder + widget.text() + '\n\n'
+                '''
+
+            #self.docOut.render(context, autoescape=True)
+            #self.output_path = f"./output/{self.v['CASENUM'].text()}-warrant.docx"
+            #self.docOut.save(self.output_path)
 
             # Confirmation QMessageBox()
             #messageComplete = QMessageBox()
@@ -465,6 +446,12 @@ class MainWindow(QMainWindow):
             #messageComplete.exec()
 
             print(self.rHolder)
+            # Is the date range box checked?
+            outputVar = ''
+            if self.rangeCheck.isChecked() == True:
+                if self.v['DATE1'].date().toString() == self.v['DATE2'].date().toString():
+                    outputVar = f"On "
+
 
             # Close window - comment out if second shot at generation is wanted?
             # If keeping window open, consider checking filename to see if exists and iterate by 1 to avoid crashes
