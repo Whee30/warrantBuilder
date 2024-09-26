@@ -6,6 +6,7 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 from qt_material import apply_stylesheet
 import os
+from datetime import datetime
 
 # This script functions. It can likely be cleaned up quite a bit, but it works.
 
@@ -13,9 +14,6 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-
-        # The default county for the warrants
-        self.county = 'Pima'
 
         # This variable holds the common verbiage additions
         self.vHolder = ''''''
@@ -62,8 +60,8 @@ class MainWindow(QMainWindow):
 
         # Establish individual widgets as dictionary entries
         self.v['CASENUM'] = QLineEdit()
-        self.v['CASENUM'].setPlaceholderText("Enter Case number")
-        self.v['CASENUM'].setFixedWidth(150)
+        self.v['CASENUM'].setPlaceholderText("V#####")
+        self.v['CASENUM'].setFixedWidth(100)
 
         self.v['RANK'] = QComboBox()
         self.v['RANK'].addItems(["Ofc.","Det.","Sgt."])
@@ -71,12 +69,16 @@ class MainWindow(QMainWindow):
 
         self.v['NAME'] = QLineEdit()
         self.v['NAME'].setFixedWidth(150)
-        self.v['NAME'].setPlaceholderText("Name: 'F. Cook'")
+        self.v['NAME'].setPlaceholderText("'J. Doe'")
         
         self.v['BADGE'] = QLineEdit()
-        self.v['BADGE'].setPlaceholderText("Badge: 'V208'")
+        self.v['BADGE'].setPlaceholderText("V###")
         self.v['BADGE'].setMaxLength(6)
         self.v['BADGE'].setFixedWidth(100)
+
+        self.v['YEARS'] = QLineEdit()
+        self.v['YEARS'].setMaxLength(2)
+        self.v['YEARS'].setFixedWidth(100)
 
         self.v['COURT'] = QComboBox()
         self.v['COURT'].addItems([
@@ -87,15 +89,15 @@ class MainWindow(QMainWindow):
 
         self.v['JUDGE'] = QLineEdit()
         self.v['JUDGE'].setFixedWidth(200)
-        self.v['JUDGE'].setPlaceholderText("Judge's Name")
+        self.v['JUDGE'].setPlaceholderText("'Hazel'")
 
-        self.v['PERSON'] = QTextEdit()
-        self.v['PERSON'].setPlaceholderText("Person information including DOB etc.")
-        self.v['PERSON'].setFixedSize(250,150)
+        self.v['SUSPECT'] = QTextEdit()
+        self.v['SUSPECT'].setPlaceholderText("Person information including DOB etc.")
+        self.v['SUSPECT'].setFixedSize(250,150)
 
-        self.v['PLACE'] = QTextEdit()
-        self.v['PLACE'].setPlaceholderText("Location, including description and characteristics.")
-        self.v['PLACE'].setFixedSize(250,150)
+        self.v['PREMISES'] = QTextEdit()
+        self.v['PREMISES'].setPlaceholderText("Location, including description and characteristics.")
+        self.v['PREMISES'].setFixedSize(250,150)
 
         self.v['VEHICLE'] = QTextEdit()
         self.v['VEHICLE'].setPlaceholderText("Vehicle, including license plate and VIN")
@@ -144,10 +146,10 @@ class MainWindow(QMainWindow):
             self.v[f'REASON{index}'].setText(item)
 
         self.v['DAYTIME'] = QCheckBox()
-        self.v['DAYTIME'].setText("In the Daytime, excluding the time period between 10pm and 6:30am.")
+        self.v['DAYTIME'].setText("In the Daytime, excluding the time period between 10pm and 6:30am")
         
         self.v['NIGHTTIME'] = QCheckBox()
-        self.v['NIGHTTIME'].setText("In the night time, for the following reason(s):")
+        self.v['NIGHTTIME'].setText("In the night time")
         self.v['NIGHTTIME'].clicked.connect( self.night_time_click )
 
         self.v['NIGHTJUSTIFY'] = QTextEdit()
@@ -243,12 +245,15 @@ class MainWindow(QMainWindow):
         infoLayout.addWidget(self.v['NAME'])
         infoLayout.addWidget(QLabel("Badge:"))
         infoLayout.addWidget(self.v['BADGE'])
-        infoLayout.addWidget(QLabel("Case Number:"))
-        infoLayout.addWidget(self.v['CASENUM'])
+        infoLayout.addWidget(QLabel("Years On:"))
+        infoLayout.addWidget(self.v['YEARS'])
+
         infoLayout.addStretch()
 
         mainTabLayout.addWidget(courtWidget)
 
+        courtLayout.addWidget(QLabel("Case Number:"))
+        courtLayout.addWidget(self.v['CASENUM'])
         courtLayout.addWidget(QLabel("Court:"))
         courtLayout.addWidget(self.v['COURT'])
         courtLayout.addWidget(QLabel("Judge's Name:"))
@@ -260,8 +265,8 @@ class MainWindow(QMainWindow):
         locLayout.addWidget(QLabel("In Possession Of:"), 0, 0)
         locLayout.addWidget(QLabel("On Premises:"), 0, 1)
         locLayout.addWidget(QLabel("In Vehicle(s):"), 0, 2)
-        locLayout.addWidget(self.v['PERSON'], 1, 0)
-        locLayout.addWidget(self.v['PLACE'], 1, 1)
+        locLayout.addWidget(self.v['SUSPECT'], 1, 0)
+        locLayout.addWidget(self.v['PREMISES'], 1, 1)
         locLayout.addWidget(self.v['VEHICLE'], 1, 2)
         
         mainTabLayout.addWidget(QLabel("Property Sought:"))
@@ -390,26 +395,50 @@ class MainWindow(QMainWindow):
             context['NIGHTTIME'] = ''
             context['NIGHTJUSTIFY'] = ''
             if self.v['DAYTIME'].isChecked() == True:
-                context['DAYTIME'] = self.v['DAYTIME'].text() + '\n'
+                context['DAYTIME'] = self.v['DAYTIME'].text() + '.\n'
             if self.v['NIGHTTIME'].isChecked() == True:
-                context['NIGHTTIME'] = self.v['NIGHTTIME'].text() + '\n'
+                context['NIGHTTIME1'] = self.v['NIGHTTIME'].text() + ' for the following reason(s):\n\n'
                 context['NIGHTJUSTIFY'] = self.v['NIGHTJUSTIFY'].toPlainText()
+                context['NIGHTTIME2'] = self.v['NIGHTTIME'].text() + ', good cause having been shown.\n'
             
+            # Establish reasons. r0-r5
+            for index, item in enumerate(self.r):
+                if self.v[f'REASON{index}'].isChecked() == True:
+                    self.rHolder = self.rHolder + item + '\n\n'
+            context['PROPERTY_REASONS'] = self.rHolder
+
+            # Establish correct grammar for number of years experience
+            if context['YEARS'] == '1':
+                context['YEARS'] = '1 year'
+            else:
+                context['YEARS'] = context['YEARS'] + ' years'
+
             print(context['DAYTIME'])
             print(context['NIGHTTIME'])
             print(context['NIGHTJUSTIFY'])
+            
+            # Establish unresolved variables
+            context['COUNTY'] = "Pima"
+            
+            context['DAY_NUMBER'] = self.dateSuffix(datetime.now().day)
+            context['MONTH'] = datetime.now().strftime('%B')
+            context['YEAR'] = datetime.now().year
 
-            #self.docOut.render(context, autoescape=True)
-            #self.output_path = f"./output/{self.v['CASENUM'].text()}-warrant.docx"
-            #self.docOut.save(self.output_path)
+            # To fix
+            # Common verbiage!
+
+
+            self.docOut.render(context, autoescape=True)
+            self.output_path = f"./output/{self.v['CASENUM'].text()}-warrant.docx"
+            self.docOut.save(self.output_path)
 
             # Confirmation QMessageBox()
-            #messageComplete = QMessageBox()
-            #messageComplete.setIcon(QMessageBox.Icon.Information)
-            #messageComplete.setWindowTitle("Warrant Generated Successfully!")
-            #messageComplete.setText(f"The warrant was built successfully! It has been saved to warrantBuilder/output/{self.v['CASENUM'].text()}-warrant.docx. Don't forget to proofread!")
-            #messageComplete.setStandardButtons(QMessageBox.StandardButton.Ok)
-            #messageComplete.exec()
+            messageComplete = QMessageBox()
+            messageComplete.setIcon(QMessageBox.Icon.Information)
+            messageComplete.setWindowTitle("Warrant Generated Successfully!")
+            messageComplete.setText(f"The warrant was built successfully! It has been saved to warrantBuilder/output/{self.v['CASENUM'].text()}-warrant.docx. Don't forget to proofread!")
+            messageComplete.setStandardButtons(QMessageBox.StandardButton.Ok)
+            messageComplete.exec()
 
             # Close window - comment out if second shot at generation is wanted?
             # If keeping window open, consider checking filename to see if exists and iterate by 1 to avoid crashes
