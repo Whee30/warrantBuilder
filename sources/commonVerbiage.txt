@@ -1,3 +1,211 @@
-Line one. This is line one.
-Line two
-Line three has extra words in it. It's pretty long. We are going to see if the line will wrap within the window since most verbiage is going to be extremely... well... wordy.
+cp definitions 
+Carr, Megan
+​
+Cook, Forrest
+​
+Definitions
+
+ 
+
+                From my training and experience as well as information received from Computer Forensic Examiners, I have come be to familiar with the following computer and Internet definitions or explanations of how computers and the Internet work.  I have set forth these definitions because they are pertinent to the facts establishing probable cause.
+
+ 
+
+Gnutella Network – A network of computers wherein each user of the network is able to distribute information and queries directly through other users of the network rather than relying on a central server to act as an indexing agent.  The Gnutella Network was the first decentralized network.  The original Gnutella was developed by Justin Frankle of Nullsoft.  Because of the networks open nature, several clients emerged as the new leaders of Gnutella.  Two clients, Shareaza and LimeWire, became the front-runners in this open network.  Gnutella utilizes a concept called super-peers or ultrapeers to create temporary indexing servers that allow the network to engage each user as a temporary server.  Any client may become a super-peer or ultrapeer if his computer and internet connections are powerful enough.  Even though the ultrapeer keeps track of the files that are being shared on the Gnutella Network, the files are sent directly from the sharing computer to the computer that is requesting the file. 
+
+ 
+
+Peer to Peer (P2P) File Sharing - P2P file sharing is a method of communication available to Internet users through the use of special software.  Computers linked together through the Internet using this software form a network that allows for the sharing of digital files between users on the network.  A user first obtains the P2P software, which can be downloaded from the Internet.  In general, P2P software allows the user to set up file(s) on a computer to be shared with others running compatible P2P software.  A user obtains files by opening the P2P software on the user's computer, and conducting a search for files that are of interest and currently being shared on the network.  Gnutella Clients like Limewire and Sharaza, sets up its searches by keywords.  The results of a keyword search are displayed to the user.  The user then selects file(s) from the results for download.  The download of a file is achieved through a direct connection between the computer requesting the file and the computer containing the file.
+
+ 
+
+IP Number/IP address (Internet Protocol Number), Sometimes called a dotted quad.  A unique number consisting of four parts separated by dots, e.g. 165.113.245.2.  Every machine that is on the Internet has a unique IP number – if a machine does not have an IP number, it is not really on the Internet.  Most machines also have one or more Domain Names that are easier for people to remember.
+
+ 
+
+AMERICAN REGISTRY OF INTERNET NUMBERS (ARIN) - The American Registry for Internet Numbers (ARIN) is a nonprofit organization, responsible for managing the Internet numbering resources for North America, a portion of the Caribbean, and sub-equatorial Africa. Other registry organizations are separately responsible for registering and maintaining domain names, which are commonly, used unique identifiers that are translated into numeric addresses (IP numbers). IP numbers are globally unique, numeric identifiers that computers use to identify hosts and networks connected to the Internet.  A free public database lookup is available from their website located at http://www.arin.net.  This database can be searched to determine who an I.P. address is assigned.  This is usually a large business or an Internet Service Provider (ISP).
+
+ 
+
+Files of Interest - Files which may be child pornography, child erotica, and /or written stories involving sex with children.  The files have been previously identified by other investigators and have been identified by their SHA1 value. 
+
+ 
+
+SHA1 Value - Secure Hash Algorithm (SHA1).  This mathematical algorithm allows for the fingerprinting of files.  Once you check a file with a SHA1 hashing utility capable of generating this value (the fingerprint), that will be a fixed-length unique identifier for that file.  The SHA1 hash is the current Federal Information Processing and Digital Signature Algorithm.  The SHA1 is called secure because it is computationally infeasible for two files with different content to have the same SHA1 hash value.
+
+ 
+
+Netstat - is a command line tool that displays a list of the active connections a computer currently has, both incoming and outgoing. It is available on Unix and Unix-like operating systems, as well as Windows.
+
+ 
+
+Characteristics of Child Pornography Collectors – Based upon my own knowledge, experience, and training in child exploitation and child pornography investigations, and the training and experience of other law enforcement officers with whom I have had discussions, there are certain characteristics common to individuals involved in the receipt and collections of child pornography:
+
+ 
+
+a.  Child pornography collectors may receive sexual gratifications, stimulation, and satisfaction from contact with children; or from fantasies they may have viewing children engaged in sexual activity or in sexually suggestive poses, such as in person, in photographs, or other visual media; or from literature describing such activity;  
+
+ 
+
+b. Collectors of child pornography may collect sexually explicit or suggestive materials, in a variety of media, including photographs, magazines, motion pictures, videotapes, books, slides and/or drawings or other visual media.  Child pornography collectors oftentimes use these materials for their own sexual arousal and gratification.  Further, they may use these materials to lower the inhibitions of children they are attempting to seduce, to arouse the selected child partner, or to demonstrate desired sexual acts;
+
+ 
+
+c.  Collectors of child pornography sometimes possess and maintain their “hard copies” of child pornographic material; that is, their pictures, films, video tapes, magazines, negatives, photographs, correspondence, mailing lists, books, tape recordings, etc., in the privacy and security of their home or some other secure location, such as a private office.  Child pornography collectors typically retain pictures, films, photographs, negatives, magazines, correspondence, books, tape recordings, mailing lists, images of child erotica, and video tapes for many years;
+
+ 
+
+d. Collectors of child pornography prefer not to be without their child pornography for any prolonged time period.  This behavior has been documented by law enforcement officers involved in the investigation of child pornography throughout the world.
+
+tracker:
+
+
+DELAYED NOTICE OF SERVICE/NIGHTTIME SERVICE
+1. Provided this Court authorizes the requested search for evidence previously identified herein, your Affiant respectfully requests to delay the notice of service for one hundred and eighty (180) days as outlined in §13-3919.B.  Based on your Affiant’s experience in conducting complex, non-traditional investigations, he believes his request is based on the following: often times persons involved in this type of criminal activity will not commit these types of crimes on a pattern and they may have extended periods of time between committing these crimes. Because of this, the evidence I am looking for may not be obtained within the normal time frame to return this warrant. If the order is not delayed, then there is a possibility that the device could be discovered and the evidence may not be obtained. I also request that this warrant be sealed until the completion of the investigation and the return of the search warrant.
+ 
+REQUEST FOR EXTENDED GPS TRACKER SURVEILLANCE
+2. It has been the experience of your Affiant and other investigators that to dismantle an on-going vehicle burglary enterprise, electronic surveillance techniques in the form of GPS tracking is vital for investigators to maintain a thorough investigation. These criminal organizations are aware of traditional surveillance techniques used by law enforcement and they use counter surveillance techniques to elude detection and minimize their risk of detection.
+3.Therefore, your Affiant believes that allowing investigators to install, monitor both daytime and nighttime hours and replace the requested GPS tracking devices for a period of ninety (90) days could accomplish the goals of this on- going criminal investigation, in a more prudent manner than if given authorization for a shorter period of time. The tracking device may produce signals from inside private garages or other such locations not open to the public or visual surveillance. Affiant notes, however, that in some instances a GPS tracking device cannot be removed within the time period authorized by the Court due to circumstances outside the control of law enforcement.  In the event your Affiant cannot remove the device within the court-authorized time frame, your Affiant will either disable the device, if possible, or independently discontinue its monitoring.
+ 
+4. Because the vehicle is sometimes parked on private property, it may be necessary to enter onto private property in order to affect the instillation, repair, replacement and removal of the tracking device. To ensure the safety of the executing officer(s) and to avoid premature disclosure of the investigation, it is requested that the court authorize installation, repair, replacement, and removal of the tracking device during both daytime and nighttime hours.
+ 
+5. It has been your Affiant’s experience that interspersed within criminally-associated travel, the vehicles being electronically monitored engage in travel that is more innocuous in nature.  At the time those trips occur, the travel might not be defined as criminally-associated travel until later in the investigation.  Additionally, the travel might be innocent in nature which is typical of those not engaged in any criminal conduct.
+ 
+6.As such, your Affiant wishes to notify this Court that not all of the monitored tracking will be directly or indirectly related to criminal conduct.
+ 
+7. Do to the fact that officers have to locate, follow, and wait for the vehicle to be at a place for a safe instillation of the GPS tracking device, your Affiant requests 14 calendar days to serve this search warrant.
+ 
+8. Allow an extended time, of 14 calendar days within issuance, for this search warrant to be served.
+ 
+SUMMARY
+Your Affiant believes that the utilization of a GPS tracker placed on the herein identified vehicle will aid in accomplishing the goals of the investigation. Your Affiant believes that his success in furthering this investigation relies on the installation, monitoring, replacement and removal of GPS trackers on the vehicle described herein for a period of ninety days.
+ 
+If the investigation requires a period longer than the initial request of ninety days, your Affiant will submit a search warrant requesting an extension that will detail the successes and failures of this initiating request.
+ 
+ 
+Based on the foregoing, your Affiant respectfully requests authorization to:
+1.Install, monitor, replace and remove (to the extent possible) GPS tracking devices on the vehicle described herein for a period not to exceed ninety days (90), unless an extension is authorized by this Court;
+-Install, monitor, replace and remove the GPS tracking devices during nighttime and day time hours;
+-Delay the notice of service for a period of one hundred and eighty days (180).
+-Serve this search warrant within 14 calendar days of issuance.
+
+
+Firearms:
+Any firearms or items related to firearms to include but not limited to, handguns, rifles, shotguns, magazines, ammunition, cartridge casings, holsters, gun cases, cleaning kits, manuals, and receipts for firearms or relating to firearms.
+
+Prohibited Weapons:
+Any item or items related to bombs, grenades, mines, or Improvised Explosive Devices (IED) to include but not limited to, parts and or components used in the construction of IEDs, explosive/energetic materials, fuses, pipe lengthsa and end caps for construction of pipe bombs, metal shavings, fragmentation pieces, manuals, books or any instructions outlining the construction or materials needed for IEDs; receipts for these items or items relating to these types of weapons.
+
+Other Weapons:
+Any item that can be used as a weapon, including but not limited to any knives, sharop or blunt instruments, items capable of strangulation/suffocation, and any items associated with these weapons.
+
+Physical Characteristics:
+Obtain physical characteristics of (Suspect/Witness Name(s) w/ DOB) to include but not limited to buccal cells, photographs, and major case fingerprints.
+
+DNA:
+Any physical or biological material including but not limited to blood, fibers, fingerprints, body fluids and articles of clothing related to this crime.
+
+Proof of residency/ownership:
+Indicia of occupancy, residency and ownership of the premises and/or vehicle described above including but not limited to utility and/or telephone bills, mail envelopes, registration, and keys.
+
+Scene processing:
+Complete forensic processing of the scene(s) and its contents to include but not limited to, photographs, scene mapping, measurements, wall and/or carpet cut-outs, and processing for latent fingerprints and DNA.
+
+Identioty:
+Any items that could identify suspects and/or co-conspirators as yet unidentified to include but not limited to identification cards, driver's license, passports, paperwork, programmable instruments such as telephones, electronic calendars and address books.
+
+Cellular telephone company records:
+Disclose the call details (including incoming and outgoing telephone calls), tolls records, disclose the location of cell site/sector (physical address) and/or GPS coordinates at call origination (for outbound calls), call termination (for incoming calls), cell sites for the calls made/received by the below listed telephone number(s), to include site addresses for all cell sites listed in the records for all calls made/received on the listed dates as well as subscriber information for all telephone numbers who called or were called by the below referenced telephone number(s). Include and/all SMS/MMS content. Disclose name, address, local and long distance telephone connection records, or records of session times and surations, length of service (including start date) and types of service utilized; telephone or instrument number or other subscriber or identity, including any temporarily assigned network address; of a subscriber to or customer of such service, subscriber information as requested and for the telephone number(s) listed below for the time period of (Date) to (Date).
+
+Electronic Devices:
+Any cellular telephones, pagers, electronic telephone/address books, or other electronic device capable of containing or storing digital messages, and the contents of their memory, and any digital messages received while in the possession of this warrant; to include viewing and analysis of their contents.****
+
+Computer related items:
+Any computers to include but not limited to dektop, laptop , tablet and items related to computers to include all hardware, keys, software, documentation, passwords, data security records, central hard diskd, flioppy disk drives, diskettes, tape drives, tapes, optical storage devices, and any other data storage devices; any device mechanism, or part that cvan be used to restrict access to the computer hardware; any and all data storage area contained within the computer to include viewing and analysis of their contents.
+
+Drugs:
+Any nnarcotic or dangerous drugs as defined in Arizona Revised Statutes to include but not limited to Cocaine, Methamphetamine, Fentanyl and Heroin. Any paraphernalis associated with these types of drugs to include but not limited to pipes, bongs, filters, packaging materials, cutting agents, and scales.
+
+Any currency associated to drug trafficking and items associated with the obtaining, depositing, secreting, transfer, concealment and/or expenditure of money to include but not limited to receipts, bank statemetns and records, books, drafts, letters of credit, money orders, and cashier's check receipts, passbooks, bank checks, safe deposit keys and computerized records.
+
+Child Crimes
+Any video, pictures or images of child exploitation/abuse material retained on computer storage devices,  tapes, optical or electronic storage media and/or printed media. 
+
+Any medicine, prescription or over the counter; formula or any other nutritional items for the infant/child.
+ 
+Misc:
+Any books, records, telephone records, receipts, notes, ledgers and other papers relating to the consipiracy of (list crimes)
+
+Any books, records, receipts, bank statements and records, money drafts, letters of credit, money orders and cashiers checks, passbooks, bank checks, safe deposit keys, and other items evidencing the obtaining, secreting, transfer, concealment and or expenditure of money including computerized records
+
+cellphones
+cellular telephones, sim cards, and additional cellular telephone memory cards or devices that are designed to store data, including the contents of their memories.
+
+any computers or computer components, computer hard sdrives and the contents of their memories, separate memory drives and the contents of their memories, any and all components used for storage of computer data and the contents of their memories
+
+the extraction and examination of any and all data stored on any electronic or other computer media to include current or deleted files, folders and directories within the media seized.
+
+It is requested that case agents from the Oro Valley Police department and/or the prosecutor's office be granted authorization to have a computer forensic specialist make "forensic images' of the server, hard drive(s)/computer system(s) and storage media; including diskettes, zip and jazz drives, optical storage mediabackup tapes or other media for forensic analysis. Additionally, I request that permission be granted to break codes or methods of encryption used to conceal items on said systems.
+
+After the recovery of any hidden, deleted, or erased data, the specialist will determined which files, communications, graphical images, multimedia items or documents found in the system constitute evidence of the offense(s) described in the affidavit. Evidence copies of the items relating to these offenses will be created and retained for further proceedings. Only those items described in the affidavit and search warrant, relating to the offense(s) described will be copied. After completion of the evidence copies, the "forensic images" will not be displayed to any person other than the specialist, case agent, and prosecutor or otherwise disclosed used or copied.
+
+I request the authority to have a computer forensic specialist download internal data from seized electronics in this case. Seized electronics in this case include cellphones, SIM cards, MicroSD cards (either installed within the cellphones or seized separately from the cellphones). Through the download process it may be necessary to bypass or defeat methods of encryption used to conceal data on the seized electronics. Once the data has been downloaded from the electronic devices, the data will be processed and examined for evidence relevant to the investigation, which includes but is not limited to SMS/MMS messages, third party application data, location data, media files, internet history, device usage information and device owner/user information.   
+ 
+
+Cellular telephones, SIM cards, and additional cellular telephone memory cards, or devices that are designed to store data, including the contents of their memories.
+
+ 
+
+• Data that may identify the owner or user of the above-described cellular communication device(s);
+
+• Address books and calendars;
+
+• Call histories and call logs;
+
+• Audio files, and associated metadata, to include any voicemail and voice notes;
+
+• Photographs and associated metadata;
+
+• Video files and associate metadata;
+
+• Documents and other text-based files;
+
+• Text messages (SMS), multimedia messages (MMS) and their attached multimedia files, and other recorded messages, whether read or unread;
+
+• Third party application data, to include usernames, passwords, account information, contacts and phonebooks, location information, correspondence, instant messages, and files;
+
+• Third party applications, to include, Skype, Google Voice and other applications that can assign a second roaming telephone number;
+
+• E-mail messages and attachments, whether read or unread;
+
+• Internet files, to include browser history, browser cache, stored cookies, browser favorites, auto-complete form history and stored passwords;
+
+• Global navigation satellite system (GNSS) data, which includes US NAVSTAR GPS and other navigation satellite systems.  This data to include latitude and longitude coordinates, way points and tracks and other location data;
+
+• Wireless network information, to include Service Set Identifier (SSID) and network location information;
+
+• Recoverable deleted data from all above-referenced item;
+
+ 
+
+The extraction and examination of any and all data stored on any electronic media, to include current or deleted files, folders, and directories within the media seized.
+
+ 
+
+Electronic data processing and storage devices, computer and computer systems, including but not limited to – central processing units, internal and external storage devices such as fixed disks, external hard disks, floppy disk drives and diskettes, tape drivers and tapes, optical storage devices and optical storage media and all memory storage devices such as flash and USB drives and memory cards, peripheral input/output  devices such as keyboards, printers, video display monitors, optical readers, web cams and modems- instruction manuals and power cords.
+
+ 
+
+Any electronic documents, ledgers, notebooks or notes detailing usernames, email addresses, IP addresses, and internet account information, and other technology related information.
+
+ 
+
+It is requested that the case agents from Oro Valley Police Department, other law enforcement agencies and/or the prosecutor’s office be granted authorization to have a computer forensic specialist make “forensic images” of the above listed cell phones and electronic devices.
+
+ 
+
+In addition, I request that permission be granted to break codes or methods of encryption used to conceal items on said cell phone.
+
+ 
+
+After recovery of any hidden, deleted or erased data, the analyst will determine which files, communications, or graphical images, multimedia items or documents found in the system constitute evidence of the offenses listed above.  Evidence copies of the items relating to these offenses will be created and retained for further proceedings.  Only those items described in the search warrant relating to the offenses will be copied. After completion of the evidence copies, the “forensic images” will not be displayed to any person other than the analyst, case agents, and prosecutor, or otherwise disclosed, used or copied.

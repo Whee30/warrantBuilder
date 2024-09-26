@@ -164,7 +164,8 @@ class MainWindow(QMainWindow):
 
         self.cvCB = []
         for index, item in enumerate(self.cvLines):
-            self.cvCB[index] = QCheckBox()
+            checkbox = QCheckBox()
+            self.cvCB.append(checkbox)
 
         submitButton = QPushButton()
         submitButton.setText("Submit")
@@ -180,7 +181,6 @@ class MainWindow(QMainWindow):
         quitButton.setText("Quit Program")
         quitButton.setProperty('class', 'danger')
         quitButton.clicked.connect( self.quitForm )
-
 
 
         # Establish the layouts of the main tab
@@ -238,7 +238,9 @@ class MainWindow(QMainWindow):
 
         verbiageTab = QWidget()
         verbiageTabLayout = QGridLayout()
+        verbiageTabLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         verbiageTab.setLayout(verbiageTabLayout) 
+        verbiageTab.setMaximumWidth(770)
 
         # Add widgets to tabs
         mainTabLayout.addWidget(infoWidget)
@@ -328,11 +330,13 @@ class MainWindow(QMainWindow):
 
         verbiageTabLayout.addWidget(QLabel("Common Verbiage - check any that apply:"))
 
-        # Create a checkBox widget with accompanying label from every line of the common verbiage .txt
+        # Create a checkBox widget with accompanying QLabel from every line of the commonVerbiage.txt
         for index, item in enumerate(self.cvLines):
-            verbiageTabLayout.addRow(self.cvLines[index], QLabel(item))
-        #    print(item)
-            #verbiageTabLayout.addWidget(self.commonVerbiage[index])
+            label = QLabel(item)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
+            label.setContentsMargins(5,5,5,5)
+            verbiageTabLayout.addRow(self.cvCB[index], label)
 
         # Add tabs
         tabs.addTab(mainScroll, "Main Tab")
@@ -447,7 +451,9 @@ class MainWindow(QMainWindow):
 
             # To fix
             # Common verbiage!
-
+            # Write-in court?
+            # County selection?
+            # Telephonic option?
 
             self.docOut.render(context, autoescape=True)
             self.output_path = f"./output/{self.v['CASENUM'].text()}-warrant.docx"
