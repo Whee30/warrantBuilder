@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMessageBox, QStyleFactory, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QCalendarWidget, QScrollArea, QDateEdit
+from PyQt6.QtWidgets import QApplication, QFormLayout, QMessageBox, QStyleFactory, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QCalendarWidget, QScrollArea, QDateEdit
 from PyQt6.QtGui import QPalette, QColor
 from PyQt6.QtCore import Qt, QDate
 from pathlib import Path
@@ -29,7 +29,11 @@ class MainWindow(QMainWindow):
             self.errorOut("skeleton.docx")
 
         # Training and Experience textfile
-        self.TandESrc = open('./sources/TandE.txt').read()
+        self.TandESrc = open('./sources/TandE.txt', 'r').read()
+
+        # Common Verbiage textfile
+        with open('./sources/commonVerbiage.txt', 'r') as file:
+            self.cvLines = file.readlines()
 
         # Where the source template file lives
         self.templatePath = "./sources/skeleton.docx"
@@ -158,6 +162,10 @@ class MainWindow(QMainWindow):
         divider.setFrameShadow(QFrame.Shadow.Sunken)
         divider.setFixedWidth(763)
 
+        self.cvCB = []
+        for index, item in enumerate(self.cvLines):
+            self.cvCB[index] = QCheckBox()
+
         submitButton = QPushButton()
         submitButton.setText("Submit")
         submitButton.setProperty('class', 'success')
@@ -175,7 +183,7 @@ class MainWindow(QMainWindow):
 
 
 
-        # Establish the layouts of the tabs
+        # Establish the layouts of the main tab
         mainTab = QWidget()
         mainTabLayout = QVBoxLayout()
         mainTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -308,6 +316,23 @@ class MainWindow(QMainWindow):
         buttonLayout.addWidget(quitButton)
 
         mainTabLayout.addStretch()
+
+        # Establish the layout of the Common Verbiage tab
+        verbiageTab = QWidget()
+        verbiageTabLayout = QFormLayout()
+        verbiageTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        verbiageTab.setLayout(verbiageTabLayout)
+        verbiageScroll = QScrollArea()
+        verbiageScroll.setWidget(verbiageTab)
+        verbiageScroll.setWidgetResizable(True)
+
+        verbiageTabLayout.addWidget(QLabel("Common Verbiage - check any that apply:"))
+
+        # Create a checkBox widget with accompanying label from every line of the common verbiage .txt
+        for index, item in enumerate(self.cvLines):
+            verbiageTabLayout.addRow(self.cvLines[index], QLabel(item))
+        #    print(item)
+            #verbiageTabLayout.addWidget(self.commonVerbiage[index])
 
         # Add tabs
         tabs.addTab(mainScroll, "Main Tab")
