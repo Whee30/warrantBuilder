@@ -16,11 +16,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # This variable holds the common verbiage additions
-        self.vHolder = ''''''
-            
-        # Hidden values from previous form that need addressing
-        #key='SERVICETIME'
-        #key='COMMON_VERBIAGE'        
+        self.vHolder = ''''''    
 
         # Check for required directories and files        
         if os.path.exists('./output') == False:
