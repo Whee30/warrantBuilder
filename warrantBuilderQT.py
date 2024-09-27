@@ -7,16 +7,18 @@ from docxtpl import DocxTemplate
 from qt_material import apply_stylesheet
 import os
 from datetime import datetime
+from cvSources import General, ICAC, Electronics
 
 # This script functions. It can likely be cleaned up quite a bit, but it works.
+# TO DO:
+# Common verbiage!
+# Telephonic option?
+# Fix reason word wrap
 
 class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-
-        # This variable holds the common verbiage additions
-        self.vHolder = ''''''    
 
         # Check for required directories and files        
         if os.path.exists('./output') == False:
@@ -41,24 +43,28 @@ class MainWindow(QMainWindow):
         # Output file variable
         self.docOut = DocxTemplate(self.templatePath)
 
-        # Establish the window geometry
-        self.setWindowTitle("Warrant Builder v2.0")
-
-        # Minimum size is proving problematic with spacing. Disabling until I figure it out.
-        self.setFixedSize(810,800)
+        # Declare values dictionary
+        self.v = {}
 
         # This variable will hold the property reason checkbox values
         self.rHolder = ''''''
 
+        # This variable holds the common verbiage additions
+        self.vHolder = ''''''    
+
+
         # Establish the tab position and settings
-        tabs = QTabWidget()
-        tabs.setTabPosition(QTabWidget.TabPosition.North)
-        tabs.setMovable(True)
+        self.setWindowTitle("Warrant Builder v2.0")
+        self.setFixedSize(810,800)
+        self.tabs = QTabWidget()
+        self.tabs.setTabPosition(QTabWidget.TabPosition.North)
+        self.tabs.setMovable(True)
+        
+        
+        ##################################################################
+        # Establish individual widgets to correspond to template entries #
+        ##################################################################
 
-        # Declare values dictionary
-        self.v = {}
-
-        # Establish individual widgets as dictionary entries
         self.v['CASENUM'] = QLineEdit()
         self.v['CASENUM'].setPlaceholderText("V#####")
         self.v['CASENUM'].setFixedWidth(100)
@@ -80,11 +86,31 @@ class MainWindow(QMainWindow):
         self.v['YEARS'].setMaxLength(2)
         self.v['YEARS'].setFixedWidth(100)
 
+        self.v['COUNTY'] = QComboBox()
+        self.v['COUNTY'].addItems([
+            "Pima",
+            "Pinal",
+            "Maricopa",
+            "Apache",
+            "Cochise",
+            "Coconino",
+            "Gila",
+            "Graham",
+            "Greenlee",
+            "La Paz",
+            "Mohave",
+            "Navajo",
+            "Santa Cruz",
+            "Yavapai",
+            "Yuma"
+        ])
+
         self.v['COURT'] = QComboBox()
         self.v['COURT'].addItems([
             "Oro Valley Magistrate Court",
             "Pima County Justice Court",
             "Pima County Superior Court"])
+        self.v['COURT'].setEditable(True)
         self.v['COURT'].setFixedWidth(200)
 
         self.v['JUDGE'] = QLineEdit()
@@ -134,16 +160,21 @@ class MainWindow(QMainWindow):
             "Were stolen or embezzled",
             "Were used as a means for committing a public offense.",
             "Is being possessed with the intent to use it as a means of committing a public offense.",
-            "Are in the possession of _______________, to whom it was delivered for the purpose of concealing it from being discovere.",
+            "Are in the possession of _______________, to whom it was delivered for the purpose of concealing it from being discovered.",
             "Consists of any item or constitutes any evidence which tends to show that a public offense has been committed,"
             " or tends to show that a particular person committed the public offense.",
             "The person sought is the subject of an outstanding warrant, which offense occurred on or about the ___ day of ______, ____"
         ]
+        
+        self.rCB = []
 
         # loop the self.r values and build checkboxes for each
         for index, item in enumerate(self.r):
             self.v[f'REASON{index}'] = QCheckBox()
             self.v[f'REASON{index}'].setText(item)
+
+        self.v['TELEPHONIC'] = QCheckBox()
+        self.v['TELEPHONIC'].setText("Telephonic Warrant")
 
         self.v['DAYTIME'] = QCheckBox()
         self.v['DAYTIME'].setText("In the Daytime, excluding the time period between 10pm and 6:30am")
@@ -183,7 +214,11 @@ class MainWindow(QMainWindow):
         quitButton.clicked.connect( self.quitForm )
 
 
-        # Establish the layouts of the main tab
+
+        #########################################
+        # Establish the layouts of the main tab #
+        #########################################
+
         mainTab = QWidget()
         mainTabLayout = QVBoxLayout()
         mainTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -198,6 +233,12 @@ class MainWindow(QMainWindow):
         infoLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         infoWidget.setLayout(infoLayout)
         
+        caseWidget = QWidget()
+        caseLayout = QHBoxLayout()
+        caseLayout.setContentsMargins(0,0,0,0)
+        caseWidget.setLayout(caseLayout)
+        caseLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
         courtWidget = QWidget()
         courtLayout = QHBoxLayout()
         courtLayout.setContentsMargins(0,0,0,0)
@@ -209,6 +250,14 @@ class MainWindow(QMainWindow):
         locLayout.setContentsMargins(0,0,0,0)
         locLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         locWidget.setLayout(locLayout)
+
+        self.rForm = QWidget()
+        self.rForm_l = QFormLayout()
+        self.rForm_l.setContentsMargins(5,5,5,5)
+        self.rForm_l.setVerticalSpacing(10)
+        self.rForm_l.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.rForm.setFixedWidth(770)
+        self.rForm.setLayout(self.rForm_l)
 
         crimeWidget = QWidget()
         crimeLayout = QHBoxLayout()
@@ -236,13 +285,17 @@ class MainWindow(QMainWindow):
         buttonWidget.setLayout(buttonLayout)
         buttonWidget.setFixedWidth(763)
 
-        verbiageTab = QWidget()
-        verbiageTabLayout = QGridLayout()
-        verbiageTabLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        verbiageTab.setLayout(verbiageTabLayout) 
-        verbiageTab.setMaximumWidth(770)
+        self.verbiageTab = QWidget()
+        self.verbiageTabLayout = QGridLayout()
+        self.verbiageTabLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self.verbiageTab.setLayout(self.verbiageTabLayout) 
+        self.verbiageTab.setMaximumWidth(770)
 
-        # Add widgets to tabs
+
+        ###########################
+        # Add widgets to Main Tab #
+        ###########################
+
         mainTabLayout.addWidget(infoWidget)
 
         infoLayout.addWidget(QLabel("Rank:"))
@@ -256,10 +309,17 @@ class MainWindow(QMainWindow):
 
         infoLayout.addStretch()
 
+        mainTabLayout.addWidget(caseWidget)
+
+        caseLayout.addWidget(QLabel("Case #:"))
+        caseLayout.addWidget(self.v['CASENUM'])
+        caseLayout.addWidget(self.v['TELEPHONIC'])
+        caseLayout.addStretch()
+
         mainTabLayout.addWidget(courtWidget)
 
-        courtLayout.addWidget(QLabel("Case Number:"))
-        courtLayout.addWidget(self.v['CASENUM'])
+        courtLayout.addWidget(QLabel("County:"))
+        courtLayout.addWidget(self.v['COUNTY'])
         courtLayout.addWidget(QLabel("Court:"))
         courtLayout.addWidget(self.v['COURT'])
         courtLayout.addWidget(QLabel("Judge's Name:"))
@@ -278,13 +338,20 @@ class MainWindow(QMainWindow):
         mainTabLayout.addWidget(QLabel("Property Sought:"))
         mainTabLayout.addWidget(self.v['PROPERTY'])
 
-        mainTabLayout.addWidget(self.v['REASON0'])
-        mainTabLayout.addWidget(self.v['REASON1'])
-        mainTabLayout.addWidget(self.v['REASON2'])
-        mainTabLayout.addWidget(self.v['REASON3'])
-        mainTabLayout.addWidget(self.v['REASON4'])
-        mainTabLayout.addWidget(self.v['REASON5'])
+        mainTabLayout.addWidget(QLabel("Which property or things:"))
 
+        mainTabLayout.addWidget(self.rForm)
+   
+        # Reason loop
+        for index, item in enumerate(self.r):
+            label = QLabel(item)
+            label.setFixedWidth(750)
+            label.adjustSize()
+            label.setWordWrap(True)
+            checkbox = QCheckBox()
+            self.rCB.append(checkbox)
+            self.rForm_l.addRow(checkbox, label)
+   
         mainTabLayout.addWidget(divider)
 
         mainTabLayout.addWidget(crimeWidget)
@@ -319,30 +386,115 @@ class MainWindow(QMainWindow):
 
         mainTabLayout.addStretch()
 
-        # Establish the layout of the Common Verbiage tab
-        verbiageTab = QWidget()
-        verbiageTabLayout = QFormLayout()
-        verbiageTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        verbiageTab.setLayout(verbiageTabLayout)
-        verbiageScroll = QScrollArea()
-        verbiageScroll.setWidget(verbiageTab)
-        verbiageScroll.setWidgetResizable(True)
 
-        verbiageTabLayout.addWidget(QLabel("Common Verbiage - check any that apply:"))
 
-        # Create a checkBox widget with accompanying QLabel from every line of the commonVerbiage.txt
-        for index, item in enumerate(self.cvLines):
+
+        ###################################################
+        # Establish the layout of the Common Verbiage tab #
+        ###################################################
+
+        self.verbiageTab = QWidget()
+        self.verbiageTabLayout = QFormLayout()
+        self.verbiageTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.verbiageTab.setLayout(self.verbiageTabLayout)
+        self.verbiageScroll = QScrollArea()
+        self.verbiageScroll.setWidget(self.verbiageTab)
+        self.verbiageScroll.setWidgetResizable(True)
+
+        # Establish topical buttons, widgets and layouts for common verbiage tab
+        self.cvICACCB = []
+        self.cvICAC = QWidget()
+        self.cvICAC.setFixedWidth(750)
+        self.cvICAC_l = QFormLayout()
+        self.cvICAC_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.cvICAC.setLayout(self.cvICAC_l)
+        self.cvICAC.hide()
+        self.cvICAC_b = QPushButton()
+        self.cvICAC_b.setText('ICAC Verbiage')
+        self.cvICAC_b.setCheckable(True)
+        self.cvICAC_b.setFixedWidth(750)
+        self.cvICAC_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvICAC) )
+
+        self.cvGenCB = []
+        self.cvGen = QWidget()
+        self.cvGen.setFixedWidth(750)
+        self.cvGen_l = QFormLayout()
+        self.cvGen_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.cvGen.setLayout(self.cvGen_l)
+        self.cvGen.hide()
+        self.cvGen_b = QPushButton()
+        self.cvGen_b.setText('General Verbiage')
+        self.cvGen_b.setCheckable(True)
+        self.cvGen_b.setFixedWidth(750)
+        self.cvGen_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvGen) )
+
+        self.cvElecCB = []
+        self.cvElec = QWidget()
+        self.cvElec.setFixedWidth(750)
+        self.cvElec_l = QFormLayout()
+        self.cvElec_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.cvElec.setLayout(self.cvElec_l)
+        self.cvElec.hide()
+        self.cvElec_b = QPushButton()
+        self.cvElec_b.setText('Electronics Verbiage')
+        self.cvElec_b.setCheckable(True)
+        self.cvElec_b.setFixedWidth(750)
+        self.cvElec_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvElec) )
+
+        self.verbiageTabLayout.addWidget(QLabel("Click topics to expand/contract - check any that apply"))
+        
+        self.verbiageTabLayout.addWidget(self.cvGen_b)
+        self.verbiageTabLayout.addWidget(self.cvGen)
+
+        self.verbiageTabLayout.addWidget(self.cvICAC_b)
+        self.verbiageTabLayout.addWidget(self.cvICAC)
+
+        self.verbiageTabLayout.addWidget(self.cvElec_b)
+        self.verbiageTabLayout.addWidget(self.cvElec)
+
+        for index, item in enumerate(General):
             label = QLabel(item)
+            label.setFixedWidth(700)
+            checkbox = QCheckBox()
+            self.cvGenCB.append(checkbox)
             label.setWordWrap(True)
             label.setStyleSheet("border: 2px inset gray; padding: 2px;")
             label.setContentsMargins(5,5,5,5)
-            verbiageTabLayout.addRow(self.cvCB[index], label)
+            self.cvGen_l.addRow(checkbox, label)
+        
+        for index, item in enumerate(ICAC):
+            label = QLabel(item)
+            label.setFixedWidth(700)
+            checkbox = QCheckBox()
+            self.cvICACCB.append(checkbox)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
+            label.setContentsMargins(5,5,5,5)
+            self.cvICAC_l.addRow(checkbox, label)
+        
+        for index, item in enumerate(Electronics):
+            label = QLabel(item)
+            label.setFixedWidth(700)
+            checkbox = QCheckBox()
+            self.cvElecCB.append(checkbox)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
+            label.setContentsMargins(5,5,5,5)
+            self.cvElec_l.addRow(checkbox, label)
 
         # Add tabs
-        tabs.addTab(mainScroll, "Main Tab")
-        tabs.addTab(verbiageTab, "Verbiage Tab")
+        self.tabs.addTab(mainScroll, "Main Tab")
+        self.tabs.addTab(self.verbiageScroll, "Verbiage Tab")
+        self.setCentralWidget(self.tabs)
 
-        self.setCentralWidget(tabs)
+    # Toggles the common verbiage topics
+    def toggle_widget(self, checked, target):
+        if checked:
+            target.show()
+        else:
+            target.hide()
+        self.tabs.adjustSize()
+        self.verbiageScroll.updateGeometry()
     
     # Disables/enables the second dateEdit
     def date_range_enable(self, i):
@@ -426,34 +578,37 @@ class MainWindow(QMainWindow):
                 context['NIGHTJUSTIFY'] = self.v['NIGHTJUSTIFY'].toPlainText()
                 context['NIGHTTIME2'] = self.v['NIGHTTIME'].text() + ', good cause having been shown.\n'
             
-            # Establish reasons. r0-r5
+            # Compile reasons
             for index, item in enumerate(self.r):
-                if self.v[f'REASON{index}'].isChecked() == True:
+                if self.rCB[index].isChecked() == True:
                     self.rHolder = self.rHolder + item + '\n\n'
             context['PROPERTY_REASONS'] = self.rHolder
 
+            # Compile Common Verbiage
+            
+            for index, item in enumerate(self.cvGenCB):
+                if item.isChecked():
+                    self.vHolder = self.vHolder + General[index] + '\n\n'                    
+            for index, item in enumerate(self.cvICACCB):
+                if item.isChecked():
+                    self.vHolder = self.vHolder + ICAC[index] + '\n\n' 
+            for index, item in enumerate(self.cvElecCB):
+                if item.isChecked():
+                    self.vHolder = self.vHolder + Electronics[index] + '\n\n'     
+            context['COMMON_VERBIAGE'] = self.vHolder               
+                   
             # Establish correct grammar for number of years experience
             if context['YEARS'] == '1':
                 context['YEARS'] = '1 year'
             else:
                 context['YEARS'] = context['YEARS'] + ' years'
 
-            print(context['DAYTIME'])
-            print(context['NIGHTTIME'])
-            print(context['NIGHTJUSTIFY'])
-            
             # Establish unresolved variables
-            context['COUNTY'] = "Pima"
             
+            context['T_AND_E'] = self.TandESrc
             context['DAY_NUMBER'] = self.dateSuffix(datetime.now().day)
             context['MONTH'] = datetime.now().strftime('%B')
             context['YEAR'] = datetime.now().year
-
-            # To fix
-            # Common verbiage!
-            # Write-in court?
-            # County selection?
-            # Telephonic option?
 
             self.docOut.render(context, autoescape=True)
             self.output_path = f"./output/{self.v['CASENUM'].text()}-warrant.docx"
@@ -517,7 +672,7 @@ class MainWindow(QMainWindow):
 
 
 app = QApplication(sys.argv)
-apply_stylesheet(app, theme='dark_purple.xml')
+#apply_stylesheet(app, theme='dark_purple.xml')
 
 window = MainWindow()
 window.show()
