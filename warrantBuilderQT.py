@@ -34,8 +34,8 @@ class MainWindow(QMainWindow):
         self.TandESrc = open('./sources/TandE.txt', 'r').read()
 
         # Common Verbiage textfile
-        with open('./sources/commonVerbiage.txt', 'r') as file:
-            self.cvLines = file.readlines()
+        #with open('./sources/commonVerbiage.txt', 'r') as file:
+        #    self.cvLines = file.readlines()
 
         # Where the source template file lives
         self.templatePath = "./sources/skeleton.docx"
@@ -194,9 +194,9 @@ class MainWindow(QMainWindow):
         divider.setFixedWidth(763)
 
         self.cvCB = []
-        for index, item in enumerate(self.cvLines):
-            checkbox = QCheckBox()
-            self.cvCB.append(checkbox)
+        #for index, item in enumerate(self.cvLines):
+        #    checkbox = QCheckBox()
+        #    self.cvCB.append(checkbox)
 
         submitButton = QPushButton()
         submitButton.setText("Submit")
@@ -296,6 +296,16 @@ class MainWindow(QMainWindow):
         # Add widgets to Main Tab #
         ###########################
 
+
+
+        mainTabLayout.addWidget(caseWidget)
+
+        caseLayout.addWidget(QLabel("Case #:"))
+        caseLayout.addWidget(self.v['CASENUM'])
+        caseLayout.addWidget(self.v['TELEPHONIC'])
+        caseLayout.addWidget(QLabel("               Fill out all boxes that are needed for your warrant. Proofread the final product."))
+        caseLayout.addStretch()
+
         mainTabLayout.addWidget(infoWidget)
 
         infoLayout.addWidget(QLabel("Rank:"))
@@ -308,13 +318,6 @@ class MainWindow(QMainWindow):
         infoLayout.addWidget(self.v['YEARS'])
 
         infoLayout.addStretch()
-
-        mainTabLayout.addWidget(caseWidget)
-
-        caseLayout.addWidget(QLabel("Case #:"))
-        caseLayout.addWidget(self.v['CASENUM'])
-        caseLayout.addWidget(self.v['TELEPHONIC'])
-        caseLayout.addStretch()
 
         mainTabLayout.addWidget(courtWidget)
 
@@ -345,7 +348,6 @@ class MainWindow(QMainWindow):
         # Reason loop
         for index, item in enumerate(self.r):
             label = QLabel(item)
-            label.setFixedWidth(750)
             label.adjustSize()
             label.setWordWrap(True)
             checkbox = QCheckBox()
