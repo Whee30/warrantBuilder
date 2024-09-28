@@ -13,7 +13,6 @@ from cvSources import General, ICAC, Electronics, Drugs, Guns
 # TO DO:
 # Common verbiage!
 # Telephonic option?
-# Fix reason word wrap
 
 class MainWindow(QMainWindow):
 
