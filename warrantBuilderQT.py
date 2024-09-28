@@ -7,7 +7,7 @@ from docxtpl import DocxTemplate
 from qt_material import apply_stylesheet
 import os
 from datetime import datetime
-from cvSources import General, ICAC, Electronics
+from cvSources import General, ICAC, Electronics, Drugs, Guns
 
 # This script functions. It can likely be cleaned up quite a bit, but it works.
 # TO DO:
@@ -443,6 +443,32 @@ class MainWindow(QMainWindow):
         self.cvElec_b.setFixedWidth(750)
         self.cvElec_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvElec) )
 
+        self.cvDrugCB = []
+        self.cvDrug = QWidget()
+        self.cvDrug.setFixedWidth(750)
+        self.cvDrug_l = QFormLayout()
+        self.cvDrug_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.cvDrug.setLayout(self.cvDrug_l)
+        self.cvDrug.hide()
+        self.cvDrug_b = QPushButton()
+        self.cvDrug_b.setText('Drugs Verbiage')
+        self.cvDrug_b.setCheckable(True)
+        self.cvDrug_b.setFixedWidth(750)
+        self.cvDrug_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvDrug) )
+
+        self.cvGunCB = []
+        self.cvGun = QWidget()
+        self.cvGun.setFixedWidth(750)
+        self.cvGun_l = QFormLayout()
+        self.cvGun_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.cvGun.setLayout(self.cvGun_l)
+        self.cvGun.hide()
+        self.cvGun_b = QPushButton()
+        self.cvGun_b.setText('Guns Verbiage')
+        self.cvGun_b.setCheckable(True)
+        self.cvGun_b.setFixedWidth(750)
+        self.cvGun_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvGun) )
+
         self.verbiageTabLayout.addWidget(QLabel("Click topics to expand/contract - check any that apply"))
         
         self.verbiageTabLayout.addWidget(self.cvGen_b)
@@ -453,6 +479,12 @@ class MainWindow(QMainWindow):
 
         self.verbiageTabLayout.addWidget(self.cvElec_b)
         self.verbiageTabLayout.addWidget(self.cvElec)
+
+        self.verbiageTabLayout.addWidget(self.cvDrug_b)
+        self.verbiageTabLayout.addWidget(self.cvDrug)
+
+        self.verbiageTabLayout.addWidget(self.cvGun_b)
+        self.verbiageTabLayout.addWidget(self.cvGun)
 
         for index, item in enumerate(General):
             label = QLabel(item)
@@ -483,6 +515,26 @@ class MainWindow(QMainWindow):
             label.setStyleSheet("border: 2px inset gray; padding: 2px;")
             label.setContentsMargins(5,5,5,5)
             self.cvElec_l.addRow(checkbox, label)
+
+        for index, item in enumerate(Guns):
+            label = QLabel(item)
+            label.setFixedWidth(700)
+            checkbox = QCheckBox()
+            self.cvGunCB.append(checkbox)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
+            label.setContentsMargins(5,5,5,5)
+            self.cvGun_l.addRow(checkbox, label)
+
+        for index, item in enumerate(Drugs):
+            label = QLabel(item)
+            label.setFixedWidth(700)
+            checkbox = QCheckBox()
+            self.cvDrugCB.append(checkbox)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
+            label.setContentsMargins(5,5,5,5)
+            self.cvDrug_l.addRow(checkbox, label)
 
         # Add tabs
         self.tabs.addTab(mainScroll, "Main Tab")
