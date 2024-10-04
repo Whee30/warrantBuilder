@@ -1,18 +1,35 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QFormLayout, QMessageBox, QStyleFactory, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QCalendarWidget, QScrollArea, QDateEdit
-from PyQt6.QtGui import QPalette, QColor
+from PyQt6.QtWidgets import QApplication, QFormLayout, QMessageBox, QSizePolicy, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QScrollArea, QDateEdit
 from PyQt6.QtCore import Qt, QDate
 from pathlib import Path
 from docxtpl import DocxTemplate
-from qt_material import apply_stylesheet
 import os
 from datetime import datetime
-from cvSources import General, ICAC, Electronics, Drugs, Guns
+import importlib.util
+
+#from sources.cvSources import General, ICAC, Electronics, Drugs, Guns
+
+def load_module_from_path(module_name, module_path):
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+# Get the path to the cvSources.py file (relative to the executable)
+module_path = './sources/cvSources.py'
+
+# Dynamically load the module
+cvSources = load_module_from_path('cvSources', module_path)
+
+General = cvSources.General
+ICAC = cvSources.ICAC
+Electronics = cvSources.Electronics
+Drugs = cvSources.Drugs
+Guns = cvSources.Guns
 
 # This script functions. It can likely be cleaned up quite a bit, but it works.
 # TO DO:
-# Common verbiage!
-# Telephonic option?
 
 class MainWindow(QMainWindow):
 
@@ -28,13 +45,11 @@ class MainWindow(QMainWindow):
             self.errorOut("TandE.txt")
         if os.path.exists('./sources/skeleton.docx') == False:
             self.errorOut("skeleton.docx")
+        if os.path.exists('./sources/cvSources.py') == False:
+            self.errorOut("cvSources.py")
 
         # Training and Experience textfile
         self.TandESrc = open('./sources/TandE.txt', 'r').read()
-
-        # Common Verbiage textfile
-        #with open('./sources/commonVerbiage.txt', 'r') as file:
-        #    self.cvLines = file.readlines()
 
         # Where the source template file lives
         self.templatePath = "./sources/skeleton.docx"
@@ -51,14 +66,14 @@ class MainWindow(QMainWindow):
         # This variable holds the common verbiage additions
         self.vHolder = ''''''    
 
-
         # Establish the tab position and settings
+
         self.setWindowTitle("Warrant Builder v2.0")
-        self.setFixedSize(810,800)
+        self.setFixedWidth(810)
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.tabs.setMovable(True)
-        
+
         
         ##################################################################
         # Establish individual widgets to correspond to template entries #
@@ -193,26 +208,18 @@ class MainWindow(QMainWindow):
         divider.setFixedWidth(763)
 
         self.cvCB = []
-        #for index, item in enumerate(self.cvLines):
-        #    checkbox = QCheckBox()
-        #    self.cvCB.append(checkbox)
 
         submitButton = QPushButton()
         submitButton.setText("Submit")
-        submitButton.setProperty('class', 'success')
         submitButton.clicked.connect( self.submitForm )
 
         clearButton = QPushButton()
         clearButton.setText("Reset Form")
-        clearButton.setProperty('class', 'warning')
         clearButton.clicked.connect( self.clearForm )
 
         quitButton = QPushButton()
         quitButton.setText("Quit Program")
-        quitButton.setProperty('class', 'danger')
         quitButton.clicked.connect( self.quitForm )
-
-
 
         #########################################
         # Establish the layouts of the main tab #
@@ -290,12 +297,9 @@ class MainWindow(QMainWindow):
         self.verbiageTab.setLayout(self.verbiageTabLayout) 
         self.verbiageTab.setMaximumWidth(770)
 
-
         ###########################
         # Add widgets to Main Tab #
         ###########################
-
-
 
         mainTabLayout.addWidget(caseWidget)
 
@@ -387,15 +391,12 @@ class MainWindow(QMainWindow):
 
         mainTabLayout.addStretch()
 
-
-
-
         ###################################################
         # Establish the layout of the Common Verbiage tab #
         ###################################################
 
         self.verbiageTab = QWidget()
-        self.verbiageTabLayout = QFormLayout()
+        self.verbiageTabLayout = QVBoxLayout()
         self.verbiageTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.verbiageTab.setLayout(self.verbiageTabLayout)
         self.verbiageScroll = QScrollArea()
@@ -405,70 +406,61 @@ class MainWindow(QMainWindow):
         # Establish topical buttons, widgets and layouts for common verbiage tab
         self.cvICACCB = []
         self.cvICAC = QWidget()
-        self.cvICAC.setFixedWidth(750)
         self.cvICAC_l = QFormLayout()
-        self.cvICAC_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.cvICAC.setLayout(self.cvICAC_l)
         self.cvICAC.hide()
         self.cvICAC_b = QPushButton()
         self.cvICAC_b.setText('ICAC Verbiage')
         self.cvICAC_b.setCheckable(True)
-        self.cvICAC_b.setFixedWidth(750)
+        self.cvICAC_b.setFixedWidth(200)        
         self.cvICAC_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvICAC) )
 
         self.cvGenCB = []
         self.cvGen = QWidget()
-        self.cvGen.setFixedWidth(750)
         self.cvGen_l = QFormLayout()
-        self.cvGen_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.cvGen.setLayout(self.cvGen_l)
         self.cvGen.hide()
         self.cvGen_b = QPushButton()
         self.cvGen_b.setText('General Verbiage')
         self.cvGen_b.setCheckable(True)
-        self.cvGen_b.setFixedWidth(750)
+        self.cvGen_b.setFixedWidth(200)        
         self.cvGen_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvGen) )
 
         self.cvElecCB = []
         self.cvElec = QWidget()
-        self.cvElec.setFixedWidth(750)
         self.cvElec_l = QFormLayout()
-        self.cvElec_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.cvElec.setLayout(self.cvElec_l)
         self.cvElec.hide()
         self.cvElec_b = QPushButton()
         self.cvElec_b.setText('Electronics Verbiage')
         self.cvElec_b.setCheckable(True)
-        self.cvElec_b.setFixedWidth(750)
+        self.cvElec_b.setFixedWidth(200)        
         self.cvElec_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvElec) )
 
         self.cvDrugCB = []
         self.cvDrug = QWidget()
-        self.cvDrug.setFixedWidth(750)
         self.cvDrug_l = QFormLayout()
-        self.cvDrug_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.cvDrug.setLayout(self.cvDrug_l)
         self.cvDrug.hide()
         self.cvDrug_b = QPushButton()
         self.cvDrug_b.setText('Drugs Verbiage')
         self.cvDrug_b.setCheckable(True)
-        self.cvDrug_b.setFixedWidth(750)
+        self.cvDrug_b.setFixedWidth(200)
         self.cvDrug_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvDrug) )
 
         self.cvGunCB = []
         self.cvGun = QWidget()
-        self.cvGun.setFixedWidth(750)
         self.cvGun_l = QFormLayout()
-        self.cvGun_l.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.cvGun.setLayout(self.cvGun_l)
         self.cvGun.hide()
         self.cvGun_b = QPushButton()
         self.cvGun_b.setText('Guns Verbiage')
         self.cvGun_b.setCheckable(True)
-        self.cvGun_b.setFixedWidth(750)
+        self.cvGun_b.setFixedWidth(200)
         self.cvGun_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvGun) )
 
-        self.verbiageTabLayout.addWidget(QLabel("Click topics to expand/contract - check any that apply"))
+        self.verbiageTabLayout.addWidget(QLabel("Click topics to expand/contract - check any that apply. \nAfter selections are made, return to the main tab to finish."))
+        self.verbiageTabLayout.addWidget(QLabel("Modify the results to suit your case, if needed."))
         
         self.verbiageTabLayout.addWidget(self.cvGen_b)
         self.verbiageTabLayout.addWidget(self.cvGen)
@@ -487,52 +479,57 @@ class MainWindow(QMainWindow):
 
         for index, item in enumerate(General):
             label = QLabel(item)
-            label.setFixedWidth(700)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
+            label.setMargin(10)
+            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             checkbox = QCheckBox()
             self.cvGenCB.append(checkbox)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
-            label.setContentsMargins(5,5,5,5)
+            self.cvGen_l.setSpacing(10)
             self.cvGen_l.addRow(checkbox, label)
         
         for index, item in enumerate(ICAC):
             label = QLabel(item)
-            label.setFixedWidth(700)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
+            label.setContentsMargins(10,10,10,10)
+            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             checkbox = QCheckBox()
             self.cvICACCB.append(checkbox)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
-            label.setContentsMargins(5,5,5,5)
+            self.cvICAC_l.setSpacing(10)
             self.cvICAC_l.addRow(checkbox, label)
         
         for index, item in enumerate(Electronics):
             label = QLabel(item)
-            label.setFixedWidth(700)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
+            label.setContentsMargins(10,10,10,10)
+            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             checkbox = QCheckBox()
             self.cvElecCB.append(checkbox)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
-            label.setContentsMargins(5,5,5,5)
+            self.cvElec_l.setSpacing(10)
             self.cvElec_l.addRow(checkbox, label)
 
         for index, item in enumerate(Guns):
             label = QLabel(item)
-            label.setFixedWidth(700)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
+            label.setContentsMargins(10,10,10,10)
+            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             checkbox = QCheckBox()
             self.cvGunCB.append(checkbox)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
-            label.setContentsMargins(5,5,5,5)
+            self.cvGun_l.setSpacing(10)
             self.cvGun_l.addRow(checkbox, label)
 
         for index, item in enumerate(Drugs):
             label = QLabel(item)
-            label.setFixedWidth(700)
+            label.setWordWrap(True)
+            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
+            label.setContentsMargins(10,10,10,10)
+            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             checkbox = QCheckBox()
             self.cvDrugCB.append(checkbox)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset gray; padding: 2px;")
-            label.setContentsMargins(5,5,5,5)
+            self.cvDrug_l.setSpacing(10)
             self.cvDrug_l.addRow(checkbox, label)
 
         # Add tabs
@@ -551,7 +548,6 @@ class MainWindow(QMainWindow):
     
     # Disables/enables the second dateEdit
     def date_range_enable(self, i):
-        print(i)
         if i == True:
             self.v['DATE2'].setDisabled(False)
         elif i == False:
@@ -559,7 +555,6 @@ class MainWindow(QMainWindow):
 
     # Disables/enables the night time justification textEdit
     def night_time_click(self, i):
-        print(i)
         if i == True:
             self.v['NIGHTJUSTIFY'].setDisabled(False)
         elif i == False:
@@ -584,7 +579,6 @@ class MainWindow(QMainWindow):
         confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
 
         result = confirmation_box.exec()
-
         
         if result == QMessageBox.StandardButton.Yes:
              
@@ -608,7 +602,7 @@ class MainWindow(QMainWindow):
                     #print("The date you entered was " + context[f'{key}MONTH'] + ' ' + context[f'{key}DAY_NUMBER'] + ', ' + str(context[f'{key}YEAR']))
                 else:
                     print("You haven't supported this type of widget yet")
-
+            context['TELEPHONIC'] = self.v['TELEPHONIC'].isChecked()
             # Is the date range box checked? Establish the fully formatted date/date range.
             context['ON_OR_BETWEEN'] = ''
             if self.rangeCheck.isChecked() == True:
@@ -638,7 +632,7 @@ class MainWindow(QMainWindow):
             context['PROPERTY_REASONS'] = self.rHolder
 
             # Compile Common Verbiage
-            
+            context['COMMON_VERBIAGE'] = ''
             for index, item in enumerate(self.cvGenCB):
                 if item.isChecked():
                     self.vHolder = self.vHolder + General[index] + '\n\n'                    
@@ -647,7 +641,13 @@ class MainWindow(QMainWindow):
                     self.vHolder = self.vHolder + ICAC[index] + '\n\n' 
             for index, item in enumerate(self.cvElecCB):
                 if item.isChecked():
-                    self.vHolder = self.vHolder + Electronics[index] + '\n\n'     
+                    self.vHolder = self.vHolder + Electronics[index] + '\n\n'  
+            for index, item in enumerate(self.cvDrugCB):
+                if item.isChecked():
+                    self.vHolder = self.vHolder + Drugs[index] + '\n\n'  
+            for index, item in enumerate(self.cvGunCB):
+                if item.isChecked():
+                    self.vHolder = self.vHolder + Guns[index] + '\n\n'     
             context['COMMON_VERBIAGE'] = self.vHolder               
                    
             # Establish correct grammar for number of years experience
@@ -676,7 +676,7 @@ class MainWindow(QMainWindow):
             messageComplete.exec()
 
             # Close window - comment out if second shot at generation is wanted?
-            # If keeping window open, consider checking filename to see if exists and iterate by 1 to avoid crashes
+            # If keeping window open, consider checking filename to see if exists and iterate by 1 to avoid crashes.
             window.close()
         else:
             print("Action Canceled")
@@ -723,11 +723,9 @@ class MainWindow(QMainWindow):
         errorOutMsg.setStandardButtons(QMessageBox.StandardButton.Ok)
         errorOutMsg.exec()
 
-
 app = QApplication(sys.argv)
-#apply_stylesheet(app, theme='dark_purple.xml')
 
 window = MainWindow()
 window.show()
-
+app.setStyle('Fusion')
 app.exec()
