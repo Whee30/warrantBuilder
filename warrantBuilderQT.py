@@ -532,9 +532,43 @@ class MainWindow(QMainWindow):
             self.cvDrug_l.setSpacing(10)
             self.cvDrug_l.addRow(checkbox, label)
 
+
+
+        ###################################################
+        # Establish the layout of the Common Verbiage tab #
+        ###################################################
+
+        self.trainingTab = QWidget()
+        self.trainingTabLayout = QVBoxLayout()
+        self.trainingTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.trainingTab.setLayout(self.trainingTabLayout)
+        self.trainingScroll = QScrollArea()
+        self.trainingScroll.setWidget(self.trainingTab)
+        self.trainingScroll.setWidgetResizable(True)
+
+        self.trainingContent = QTextEdit()
+        self.trainingContent.setMaximumHeight(300)
+        self.trainingContent.setText(self.TandESrc)
+
+        self.trainingSave = QPushButton()
+        self.trainingSave.setText("Save Changes")
+        self.trainingSave.clicked.connect( self.saveTrainingChanges )
+
+        self.trainingReload = QPushButton()
+        self.trainingReload.setText("Reload Current Version")
+        self.trainingReload.clicked.connect( self.reloadTrainingContent )
+
+        self.trainingTabLayout.addWidget(QLabel("If you make changes to this, you must save them for the changes to apper in your warrant."))
+        self.trainingTabLayout.addWidget(QLabel("This is how your training and Experience will look currently:"))
+        self.trainingTabLayout.addWidget(self.trainingContent)
+        self.trainingTabLayout.addWidget(self.trainingSave)
+        self.trainingTabLayout.addWidget(self.trainingReload)
+        self.trainingTabLayout.addStretch()
+
         # Add tabs
-        self.tabs.addTab(mainScroll, "Main Tab")
-        self.tabs.addTab(self.verbiageScroll, "Verbiage Tab")
+        self.tabs.addTab(mainScroll, "Warrant Content")
+        self.tabs.addTab(self.verbiageScroll, "Template Verbiage")
+        self.tabs.addTab(self.trainingScroll, "Training and Experience")
         self.setCentralWidget(self.tabs)
 
     # Toggles the common verbiage topics
@@ -570,6 +604,32 @@ class MainWindow(QMainWindow):
             return str(day) + 'nd'
         elif day == 3 or day == 23:
             return str(day) + 'rd'
+
+    def saveTrainingChanges(self):
+        confirmation_box = QMessageBox()
+        confirmation_box.setIcon(QMessageBox.Icon.Question)
+        confirmation_box.setWindowTitle("Confirm Submission?")
+        confirmation_box.setText("Are you sure you want to save these changes to your training and experience? You cannot go back if you click 'Yes'.")
+        confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+
+        result = confirmation_box.exec()
+        
+        if result == QMessageBox.StandardButton.Yes:
+            with open('./sources/TandE.txt', 'w') as file:
+                file.write(self.trainingContent.toPlainText())
+            self.TandESrc = open('./sources/TandE.txt', 'r').read()
+
+    def reloadTrainingContent(self):
+        confirmation_box = QMessageBox()
+        confirmation_box.setIcon(QMessageBox.Icon.Question)
+        confirmation_box.setWindowTitle("Reload current content?")
+        confirmation_box.setText("Are you sure you want to reload the current value of the training and experience file? Any changes that have not been saved will be lost.")
+        confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+
+        result = confirmation_box.exec()
+        
+        if result == QMessageBox.StandardButton.Yes:
+            self.trainingContent.setText(self.TandESrc)
 
     def submitForm(self):
         confirmation_box = QMessageBox()

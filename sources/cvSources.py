@@ -13,6 +13,13 @@ ICAC = [
       "Images, writings, documents, diaries, journals, letters, e-mail communications, or other correspondence, reflecting a sexual interest in children or related to sexual activity between adults and children or between children and children"
    ]
 Electronics = [
+      "For the above listed Apple ID, I am requesting the following account information:\n\t"
+	   "Account creation date as well as account creation IP\n\t"
+	   "Name(s), Address(es) and email address(es) associated to the account\n\t"
+	   "IP logs of account activity\n\t"
+	   "Associated device(s) and device ID(s), such as serial number, MEID and/or IMEI\n\t"
+	   "Recovery phone number(s) and/or email address(es) for the account\n\t"
+	   "stored methods of payment associated with the account\n\t"
       "Electronics already in the possession of the Oro Valley Police Department: It is requested that case agents from the Oro Valley Police department, the prosecutor's office, and/or the agents thereof be granted authorization to have a computer forensic specialist make 'forensic acquisitions' of the electronic devices seized for forensic analysis, as listed above. In addition to the devices themselves, I request that authorization be granted to make 'forensic acquisitions' of any inserted/installed SIM cards, MicroSD cards or other storage media.",
       "Any cellular telephones, tablets, pagers, or other electronic devices capable of sending and/or receiving a cellular, wi-fi or Bluetooth signal and capable of containing or storing messages or making phone calls. In addition to the devices themselves, any inserted or capable of being inserted SIM cards, MicroSD cards, cables, batteries or accessories deemed necessary for the operation and/or complete collection of associated data from the device.",
       "Computer systems to include but not limited to: desktop, laptop and tablet computers. In addition to the computers themselves, items related to the computers and deemed necessary for the operation and/or complete collection of associated data to include all cables, hardware, keys, software, documentation, passwords, data security records, network devices, internal as well as external storage media, network-attached storage, and any other data storage devices.",
@@ -31,6 +38,33 @@ Guns = [
 Drugs = [
    "Any narcotic or dangerous drugs as defined in Arizona Revised Statutes to include but not limited to Cocaine, Methamphetamine, Fentanyl and Heroin. Any paraphernalia associated with these types of drugs to include but not limited to pipes, bongs, filters, packaging materials, cutting agents, and scales.",
    "Any currency associated to drug trafficking and items associated with the obtaining, depositing, secreting, transfer, concealment and/or expenditure of money to include but not limited to receipts, bank statements and records, books, drafts, letters of credit, money orders, and cashier's check receipts, passbooks, bank checks, safe deposit keys and computerized records."
+]
+WebAccounts = [
+   "For the above listed Apple ID, I am requesting the following account information:\n\t"
+	"Account creation date as well as account creation IP\n\tName(s), Address(es) and email address(es) associated to the account\n\t"
+	"IP logs of account activity\n\tAssociated device(s) and device ID(s), such as serial number, MEID and/or IMEI\n\t"
+	"Recovery phone number(s) and/or email address(es) for the account\n\tstored methods of payment associated with the account\n\n"
+   "In addition to the account information, I am requesting the following account content:\n\t"
+	"Media files, such as images, video and/or audio\n\tCommunication content/logs such as iMessage, SMS, MMS and/or email\n\t"
+	"Location data\n\tDevice backup data\n\tiCloud Drive contents\n\tiCloud Drive logs\n\t"
+	"Notes Data\n\tCalendar Data\n\tContacts Data",
+   "For the above listed Microsoft Account, I am requesting the following account information:\n\tAccount creation date as well as account creation IP\n\t"
+	"Name(s), Address(es) and email address(es) associated to the account\n\tIP logs of account activity\n\t"
+	"Associated device(s) and device ID(s), such as serial number, MEID and/or IMEI\n\tRecovery phone number(s) and/or email address(es) for the account\n\t"
+	"stored methods of payment associated with the account\n\n"
+   "In addition to the account information, I am requesting the following account content:\n\tMedia files, such as images, video and/or audio\n\t"
+	"Communication content/logs such as email, Teams messages and/or Skype messages\n\tLocation data\n\tDevice backup data\n\tOneDrive contents\n\t"
+	"OneDrive logs",
+   "For the above listed Facebook account, I am requesting the following account information:\n\tAccount creation date as well as account creation IP\n\t"
+	"Name(s), Address(es) and email address(es) associated to the account\n\tOther account names which were registered with the same email address(es)\n\t"
+	"IP logs of account activity\n\tAssociated device(s) and device ID(s), such as serial number, MEID and/or IMEI\n\tRecovery phone number(s) and/or email address(es) for the account\n\t"
+	"stored methods of payment associated with the account\n\nIn addition to the account information, I am requesting the following account content:\n\t"
+	"Posts, Comments, Direct Messages, Stories/Reels\n\tMedia files, such as images, video and/or audio\n\tAny metadata associated to the above listed media which was previously stripped from the media\n\tLocation data",
+   "For the above listed Instagram account, I am requesting the following account information:\n\tAccount creation date as well as account creation IP\n\t"
+	"Name(s), Address(es) and email address(es) associated to the account\n\tOther account names which were registered with the same email address(es)\n\t"
+	"IP logs of account activity\n\tAssociated device(s) and device ID(s), such as serial number, MEID and/or IMEI\n\tRecovery phone number(s) and/or email address(es) for the account\n\t"
+	"stored methods of payment associated with the account\n\nIn addition to the account information, I am requesting the following account content:\n\t"
+	"Posts, Comments, Direct Messages, Stories/Reels\n\tMedia files, such as images, video and/or audio\n\tAny metadata associated to the above listed media which was previously stripped from the media\n\tLocation data",
 ]
 
 # This approach is making my brain hurt. Pressing pause until I'm smarter.
