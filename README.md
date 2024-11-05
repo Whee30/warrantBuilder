@@ -1,3 +1,5 @@
+Built with PyQT6 and docxtpl, needs python 3.9x. Working on figuring out how to translate the GUI to a modern version of Python, but PyQT6 isn't supported it doesn't look like.
+
 The first version of this project was born into PySimpleGUI. After they went closed source, I pivoted to PyQT6. The interface is cleaner, but the progress stalled while the learning curve spiked.
 
 The goal is to have a self-contained application to speed along the process of warrant writing so that the "boots on the ground" can focus on the facts of the case vs. finding the right template from someone's thumbdrive. 
