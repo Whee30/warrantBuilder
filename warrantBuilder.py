@@ -449,9 +449,9 @@ class MainWindow(QMainWindow):
                     listVar_l.setSpacing(10)
                     listVar_l.addRow(checkbox, label)
 
-        ###################################################
-        # Establish the layout of the Common Verbiage tab #
-        ###################################################
+        ###########################################################
+        # Establish the layout of the Training and Experience tab #
+        ###########################################################
 
         self.trainingTab = QWidget()
         self.trainingTabLayout = QVBoxLayout()
