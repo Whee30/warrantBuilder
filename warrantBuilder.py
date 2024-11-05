@@ -17,16 +17,14 @@ def load_module_from_path(module_name, module_path):
     return module
 
 # Get the path to the cvSources.py file (relative to the executable)
-module_path = './sources/cvSources.py'
+file_path = './sources/cvSources.py'
 
-# Dynamically load the module
-cvSources = load_module_from_path('cvSources', module_path)
+sourceList = importlib.util.spec_from_file_location('secondary_script', file_path)
+secondary_script = importlib.util.module_from_spec(sourceList)
+sourceList.loader.exec_module(secondary_script)
 
-General = cvSources.General
-ICAC = cvSources.ICAC
-Electronics = cvSources.Electronics
-Drugs = cvSources.Drugs
-Guns = cvSources.Guns
+# Access the list
+my_list = secondary_script.cvDict
 
 # This script functions. It can likely be cleaned up quite a bit, but it works.
 # TO DO:
@@ -200,7 +198,7 @@ class MainWindow(QMainWindow):
         self.v['NIGHTJUSTIFY'] = QTextEdit()
         self.v['NIGHTJUSTIFY'].setPlaceholderText("Enter night time justification")
         self.v['NIGHTJUSTIFY'].setFixedSize(300,120)
-        self.v['NIGHTJUSTIFY'].setDisabled(True)
+        self.v['NIGHTJUSTIFY'].setHidden(True)
 
         divider = QFrame()
         divider.setFrameShape(QFrame.Shape.HLine)
@@ -404,135 +402,52 @@ class MainWindow(QMainWindow):
         self.verbiageScroll.setWidgetResizable(True)
 
         # Establish topical buttons, widgets and layouts for common verbiage tab
-        self.cvICACCB = []
-        self.cvICAC = QWidget()
-        self.cvICAC_l = QFormLayout()
-        self.cvICAC.setLayout(self.cvICAC_l)
-        self.cvICAC.hide()
-        self.cvICAC_b = QPushButton()
-        self.cvICAC_b.setText('ICAC Verbiage')
-        self.cvICAC_b.setCheckable(True)
-        self.cvICAC_b.setFixedWidth(200)        
-        self.cvICAC_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvICAC) )
+        # This list will hold the categories which are made into button objects
+        self.button_list = []
+        # This list will hold the content of the verbiage
+        self.verbiage_list = []
+        # This list will reference the widgets to be shown or hidden which contain the verbiage itself
+        self.hidden_widget_list = []
+        self.checkbox_list = []
 
-        self.cvGenCB = []
-        self.cvGen = QWidget()
-        self.cvGen_l = QFormLayout()
-        self.cvGen.setLayout(self.cvGen_l)
-        self.cvGen.hide()
-        self.cvGen_b = QPushButton()
-        self.cvGen_b.setText('General Verbiage')
-        self.cvGen_b.setCheckable(True)
-        self.cvGen_b.setFixedWidth(200)        
-        self.cvGen_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvGen) )
-
-        self.cvElecCB = []
-        self.cvElec = QWidget()
-        self.cvElec_l = QFormLayout()
-        self.cvElec.setLayout(self.cvElec_l)
-        self.cvElec.hide()
-        self.cvElec_b = QPushButton()
-        self.cvElec_b.setText('Electronics Verbiage')
-        self.cvElec_b.setCheckable(True)
-        self.cvElec_b.setFixedWidth(200)        
-        self.cvElec_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvElec) )
-
-        self.cvDrugCB = []
-        self.cvDrug = QWidget()
-        self.cvDrug_l = QFormLayout()
-        self.cvDrug.setLayout(self.cvDrug_l)
-        self.cvDrug.hide()
-        self.cvDrug_b = QPushButton()
-        self.cvDrug_b.setText('Drugs Verbiage')
-        self.cvDrug_b.setCheckable(True)
-        self.cvDrug_b.setFixedWidth(200)
-        self.cvDrug_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvDrug) )
-
-        self.cvGunCB = []
-        self.cvGun = QWidget()
-        self.cvGun_l = QFormLayout()
-        self.cvGun.setLayout(self.cvGun_l)
-        self.cvGun.hide()
-        self.cvGun_b = QPushButton()
-        self.cvGun_b.setText('Guns Verbiage')
-        self.cvGun_b.setCheckable(True)
-        self.cvGun_b.setFixedWidth(200)
-        self.cvGun_b.clicked.connect( lambda checked: self.toggle_widget(checked, self.cvGun) )
+        self.print_checks = QPushButton()
+        self.print_checks.setText('Print Checked Items')
+        self.print_checks.clicked.connect(self.submitForm)
 
         self.verbiageTabLayout.addWidget(QLabel("Click topics to expand/contract - check any that apply. \nAfter selections are made, return to the main tab to finish."))
         self.verbiageTabLayout.addWidget(QLabel("Modify the results to suit your case, if needed."))
         
-        self.verbiageTabLayout.addWidget(self.cvGen_b)
-        self.verbiageTabLayout.addWidget(self.cvGen)
 
-        self.verbiageTabLayout.addWidget(self.cvICAC_b)
-        self.verbiageTabLayout.addWidget(self.cvICAC)
-
-        self.verbiageTabLayout.addWidget(self.cvElec_b)
-        self.verbiageTabLayout.addWidget(self.cvElec)
-
-        self.verbiageTabLayout.addWidget(self.cvDrug_b)
-        self.verbiageTabLayout.addWidget(self.cvDrug)
-
-        self.verbiageTabLayout.addWidget(self.cvGun_b)
-        self.verbiageTabLayout.addWidget(self.cvGun)
-
-        for index, item in enumerate(General):
-            label = QLabel(item)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
-            label.setMargin(10)
-            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-            checkbox = QCheckBox()
-            self.cvGenCB.append(checkbox)
-            self.cvGen_l.setSpacing(10)
-            self.cvGen_l.addRow(checkbox, label)
-        
-        for index, item in enumerate(ICAC):
-            label = QLabel(item)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
-            label.setContentsMargins(10,10,10,10)
-            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-            checkbox = QCheckBox()
-            self.cvICACCB.append(checkbox)
-            self.cvICAC_l.setSpacing(10)
-            self.cvICAC_l.addRow(checkbox, label)
-        
-        for index, item in enumerate(Electronics):
-            label = QLabel(item)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
-            label.setContentsMargins(10,10,10,10)
-            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-            checkbox = QCheckBox()
-            self.cvElecCB.append(checkbox)
-            self.cvElec_l.setSpacing(10)
-            self.cvElec_l.addRow(checkbox, label)
-
-        for index, item in enumerate(Guns):
-            label = QLabel(item)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
-            label.setContentsMargins(10,10,10,10)
-            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-            checkbox = QCheckBox()
-            self.cvGunCB.append(checkbox)
-            self.cvGun_l.setSpacing(10)
-            self.cvGun_l.addRow(checkbox, label)
-
-        for index, item in enumerate(Drugs):
-            label = QLabel(item)
-            label.setWordWrap(True)
-            label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
-            label.setContentsMargins(10,10,10,10)
-            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-            checkbox = QCheckBox()
-            self.cvDrugCB.append(checkbox)
-            self.cvDrug_l.setSpacing(10)
-            self.cvDrug_l.addRow(checkbox, label)
+        for index, item in enumerate(my_list):
+            self.button_list.append(item)
+            self.button_list[index] = QPushButton()
+            self.button_list[index].setText(item[0])
+            self.button_list[index].setCheckable(True)
+            self.button_list[index].setFixedWidth(200)
+            self.button_list[index].clicked.connect( lambda checked, idx=index: self.toggle_widget(checked, idx))
+            self.verbiageTabLayout.addWidget(self.button_list[index])
 
 
+            listVar_w = QWidget()
+            listVar_l = QFormLayout()
+            listVar_l.setSpacing(10)
+            listVar_w.setLayout(listVar_l)
+            self.verbiageTabLayout.addWidget(listVar_w)
+            listVar_w.setHidden( True )
+            self.hidden_widget_list.append(listVar_w)
+
+            for index, listItem in enumerate(item):
+                if index > 0:
+                    self.verbiage_list.append(listItem)
+                    label = QLabel(listItem)
+                    label.setWordWrap(True)
+                    label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
+                    label.setMargin(10)
+                    label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+                    checkbox = QCheckBox()
+                    self.checkbox_list.append(checkbox)
+                    listVar_l.setSpacing(10)
+                    listVar_l.addRow(checkbox, label)
 
         ###################################################
         # Establish the layout of the Common Verbiage tab #
@@ -574,11 +489,12 @@ class MainWindow(QMainWindow):
     # Toggles the common verbiage topics
     def toggle_widget(self, checked, target):
         if checked:
-            target.show()
+            self.hidden_widget_list[target].show()
         else:
-            target.hide()
-        self.tabs.adjustSize()
+            self.hidden_widget_list[target].hide()
+        #self.verbiageTabLayout.adjustSize()
         self.verbiageScroll.updateGeometry()
+
     
     # Disables/enables the second dateEdit
     def date_range_enable(self, i):
@@ -590,9 +506,9 @@ class MainWindow(QMainWindow):
     # Disables/enables the night time justification textEdit
     def night_time_click(self, i):
         if i == True:
-            self.v['NIGHTJUSTIFY'].setDisabled(False)
+            self.v['NIGHTJUSTIFY'].setHidden(False)
         elif i == False:
-            self.v['NIGHTJUSTIFY'].setDisabled(True)
+            self.v['NIGHTJUSTIFY'].setHidden(True)
 
     # This function will apply the appropriate date suffix "1st", "2nd", "3rd", "4th" etc.
     def dateSuffix(self, day):
@@ -693,21 +609,10 @@ class MainWindow(QMainWindow):
 
             # Compile Common Verbiage
             context['COMMON_VERBIAGE'] = ''
-            for index, item in enumerate(self.cvGenCB):
-                if item.isChecked():
-                    self.vHolder = self.vHolder + General[index] + '\n\n'                    
-            for index, item in enumerate(self.cvICACCB):
-                if item.isChecked():
-                    self.vHolder = self.vHolder + ICAC[index] + '\n\n' 
-            for index, item in enumerate(self.cvElecCB):
-                if item.isChecked():
-                    self.vHolder = self.vHolder + Electronics[index] + '\n\n'  
-            for index, item in enumerate(self.cvDrugCB):
-                if item.isChecked():
-                    self.vHolder = self.vHolder + Drugs[index] + '\n\n'  
-            for index, item in enumerate(self.cvGunCB):
-                if item.isChecked():
-                    self.vHolder = self.vHolder + Guns[index] + '\n\n'     
+            for index, item in enumerate(self.verbiage_list):
+                if self.checkbox_list[index].isChecked():
+                    self.vHolder = self.vHolder + item + '\n\n'                    
+    
             context['COMMON_VERBIAGE'] = self.vHolder               
                    
             # Establish correct grammar for number of years experience

@@ -1,1 +1,1 @@
-The user should enter their training and experience here. Each user's TandE.txt file will be specific to themselves.
+The user should input their own training and experience here.
