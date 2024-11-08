@@ -744,7 +744,7 @@ class MainWindow(QMainWindow):
             context = ''
             self.vHolder = ''
             self.rHolder = ''
-
+            self.clearForm()
             # Close window - comment out if second shot at generation is wanted?
             #window.close()
         else:
