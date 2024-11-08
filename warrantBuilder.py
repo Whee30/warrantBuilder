@@ -1,13 +1,14 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QFormLayout, QMessageBox, QSizePolicy, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QScrollArea, QDateEdit
-from PyQt6.QtCore import Qt, QDate
-from pathlib import Path
+from PyQt6.QtWidgets import QApplication, QListView, QFormLayout, QMessageBox, QSizePolicy, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QScrollArea, QDateEdit
+from PyQt6.QtCore import Qt, QDate, QDir, QModelIndex
+from PyQt6.QtGui import QFileSystemModel
 from docxtpl import DocxTemplate
 import os
 from datetime import datetime
 import importlib.util
-
-#from sources.cvSources import General, ICAC, Electronics, Drugs, Guns
+import json
+import glob
+#import pyi_splash
 
 def load_module_from_path(module_name, module_path):
     spec = importlib.util.spec_from_file_location(module_name, module_path)
@@ -25,9 +26,6 @@ sourceList.loader.exec_module(secondary_script)
 
 # Access the list
 my_list = secondary_script.cvDict
-
-# This script functions. It can likely be cleaned up quite a bit, but it works.
-# TO DO:
 
 class MainWindow(QMainWindow):
 
@@ -66,12 +64,11 @@ class MainWindow(QMainWindow):
 
         # Establish the tab position and settings
 
-        self.setWindowTitle("Warrant Builder v2.0")
+        self.setWindowTitle("Warrant Builder v2.1")
         self.setFixedWidth(810)
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.tabs.setMovable(True)
-
         
         ##################################################################
         # Establish individual widgets to correspond to template entries #
@@ -180,11 +177,6 @@ class MainWindow(QMainWindow):
         
         self.rCB = []
 
-        # loop the self.r values and build checkboxes for each
-        for index, item in enumerate(self.r):
-            self.v[f'REASON{index}'] = QCheckBox()
-            self.v[f'REASON{index}'].setText(item)
-
         self.v['TELEPHONIC'] = QCheckBox()
         self.v['TELEPHONIC'].setText("Telephonic Warrant")
 
@@ -209,27 +201,27 @@ class MainWindow(QMainWindow):
 
         submitButton = QPushButton()
         submitButton.setText("Submit")
-        submitButton.clicked.connect( self.submitForm )
+        submitButton.clicked.connect(self.submitForm)
 
         clearButton = QPushButton()
         clearButton.setText("Reset Form")
-        clearButton.clicked.connect( self.clearForm )
+        clearButton.clicked.connect(lambda: self.are_you_sure(self.clearForm))
 
         quitButton = QPushButton()
         quitButton.setText("Quit Program")
-        quitButton.clicked.connect( self.quitForm )
+        quitButton.clicked.connect(lambda: self.are_you_sure(self.quitForm))
 
         #########################################
         # Establish the layouts of the main tab #
         #########################################
 
-        mainTab = QWidget()
-        mainTabLayout = QVBoxLayout()
-        mainTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        mainTab.setLayout(mainTabLayout)
-        mainScroll = QScrollArea()
-        mainScroll.setWidget(mainTab)
-        mainScroll.setWidgetResizable(True)
+        self.mainTab = QWidget()
+        self.mainTabLayout = QVBoxLayout()
+        self.mainTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.mainTab.setLayout(self.mainTabLayout)
+        self.mainScroll = QScrollArea()
+        self.mainScroll.setWidget(self.mainTab)
+        self.mainScroll.setWidgetResizable(True)
 
         infoWidget = QWidget()
         infoLayout = QHBoxLayout()
@@ -299,7 +291,7 @@ class MainWindow(QMainWindow):
         # Add widgets to Main Tab #
         ###########################
 
-        mainTabLayout.addWidget(caseWidget)
+        self.mainTabLayout.addWidget(caseWidget)
 
         caseLayout.addWidget(QLabel("Case #:"))
         caseLayout.addWidget(self.v['CASENUM'])
@@ -307,7 +299,7 @@ class MainWindow(QMainWindow):
         caseLayout.addWidget(QLabel("               Fill out all boxes that are needed for your warrant. Proofread the final product."))
         caseLayout.addStretch()
 
-        mainTabLayout.addWidget(infoWidget)
+        self.mainTabLayout.addWidget(infoWidget)
 
         infoLayout.addWidget(QLabel("Rank:"))
         infoLayout.addWidget(self.v['RANK'])
@@ -320,7 +312,7 @@ class MainWindow(QMainWindow):
 
         infoLayout.addStretch()
 
-        mainTabLayout.addWidget(courtWidget)
+        self.mainTabLayout.addWidget(courtWidget)
 
         courtLayout.addWidget(QLabel("County:"))
         courtLayout.addWidget(self.v['COUNTY'])
@@ -330,7 +322,7 @@ class MainWindow(QMainWindow):
         courtLayout.addWidget(self.v['JUDGE'])
         courtLayout.addStretch()
 
-        mainTabLayout.addWidget(locWidget)
+        self.mainTabLayout.addWidget(locWidget)
         
         locLayout.addWidget(QLabel("In Possession Of:"), 0, 0)
         locLayout.addWidget(QLabel("On Premises:"), 0, 1)
@@ -339,12 +331,12 @@ class MainWindow(QMainWindow):
         locLayout.addWidget(self.v['PREMISES'], 1, 1)
         locLayout.addWidget(self.v['VEHICLE'], 1, 2)
         
-        mainTabLayout.addWidget(QLabel("Property Sought:"))
-        mainTabLayout.addWidget(self.v['PROPERTY'])
+        self.mainTabLayout.addWidget(QLabel("Property Sought:"))
+        self.mainTabLayout.addWidget(self.v['PROPERTY'])
 
-        mainTabLayout.addWidget(QLabel("Which property or things:"))
+        self.mainTabLayout.addWidget(QLabel("Which property or things:"))
 
-        mainTabLayout.addWidget(self.rForm)
+        self.mainTabLayout.addWidget(self.rForm)
    
         # Reason loop
         for index, item in enumerate(self.r):
@@ -355,9 +347,9 @@ class MainWindow(QMainWindow):
             self.rCB.append(checkbox)
             self.rForm_l.addRow(checkbox, label)
    
-        mainTabLayout.addWidget(divider)
+        self.mainTabLayout.addWidget(divider)
 
-        mainTabLayout.addWidget(crimeWidget)
+        self.mainTabLayout.addWidget(crimeWidget)
 
         crimeLayout.addWidget(crimeCol1)
         crimeCol1Layout.addWidget(QLabel("Crimes Investigated:"))
@@ -372,22 +364,22 @@ class MainWindow(QMainWindow):
         crimeCol2Layout.addWidget(self.v['DATE2'])
         crimeCol2Layout.addStretch()
 
-        mainTabLayout.addWidget(QLabel("Affidavit/Probable Cause:"))
-        mainTabLayout.addWidget(self.v['AFFIDAVIT'])    
+        self.mainTabLayout.addWidget(QLabel("Affidavit/Probable Cause:"))
+        self.mainTabLayout.addWidget(self.v['AFFIDAVIT'])    
     
-        mainTabLayout.addWidget(QLabel("I am seeking to serve this warrant:"))
+        self.mainTabLayout.addWidget(QLabel("I am seeking to serve this warrant:"))
 
-        mainTabLayout.addWidget(self.v['DAYTIME'])
-        mainTabLayout.addWidget(self.v['NIGHTTIME'])
-        mainTabLayout.addWidget(self.v['NIGHTJUSTIFY'])
+        self.mainTabLayout.addWidget(self.v['DAYTIME'])
+        self.mainTabLayout.addWidget(self.v['NIGHTTIME'])
+        self.mainTabLayout.addWidget(self.v['NIGHTJUSTIFY'])
 
-        mainTabLayout.addWidget(buttonWidget)
+        self.mainTabLayout.addWidget(buttonWidget)
 
         buttonLayout.addWidget(submitButton)
         buttonLayout.addWidget(clearButton)
         buttonLayout.addWidget(quitButton)
 
-        mainTabLayout.addStretch()
+        self.mainTabLayout.addStretch()
 
         ###################################################
         # Establish the layout of the Common Verbiage tab #
@@ -401,7 +393,6 @@ class MainWindow(QMainWindow):
         self.verbiageScroll.setWidget(self.verbiageTab)
         self.verbiageScroll.setWidgetResizable(True)
 
-        # Establish topical buttons, widgets and layouts for common verbiage tab
         # This list will hold the categories which are made into button objects
         self.button_list = []
         # This list will hold the content of the verbiage
@@ -410,14 +401,10 @@ class MainWindow(QMainWindow):
         self.hidden_widget_list = []
         self.checkbox_list = []
 
-        self.print_checks = QPushButton()
-        self.print_checks.setText('Print Checked Items')
-        self.print_checks.clicked.connect(self.submitForm)
-
         self.verbiageTabLayout.addWidget(QLabel("Click topics to expand/contract - check any that apply. \nAfter selections are made, return to the main tab to finish."))
         self.verbiageTabLayout.addWidget(QLabel("Modify the results to suit your case, if needed."))
         
-
+        # Iterate the template verbiage into checkboxes.
         for index, item in enumerate(my_list):
             self.button_list.append(item)
             self.button_list[index] = QPushButton()
@@ -426,7 +413,6 @@ class MainWindow(QMainWindow):
             self.button_list[index].setFixedWidth(200)
             self.button_list[index].clicked.connect( lambda checked, idx=index: self.toggle_widget(checked, idx))
             self.verbiageTabLayout.addWidget(self.button_list[index])
-
 
             listVar_w = QWidget()
             listVar_l = QFormLayout()
@@ -467,11 +453,11 @@ class MainWindow(QMainWindow):
 
         self.trainingSave = QPushButton()
         self.trainingSave.setText("Save Changes")
-        self.trainingSave.clicked.connect( self.saveTrainingChanges )
+        self.trainingSave.clicked.connect(lambda: self.are_you_sure(self.saveTrainingChanges))
 
         self.trainingReload = QPushButton()
         self.trainingReload.setText("Reload Current Version")
-        self.trainingReload.clicked.connect( self.reloadTrainingContent )
+        self.trainingReload.clicked.connect(lambda: self.are_you_sure(self.reloadTrainingContent))
 
         self.trainingTabLayout.addWidget(QLabel("If you make changes to this, you must save them for the changes to apper in your warrant."))
         self.trainingTabLayout.addWidget(QLabel("This is how your training and Experience will look currently:"))
@@ -480,11 +466,124 @@ class MainWindow(QMainWindow):
         self.trainingTabLayout.addWidget(self.trainingReload)
         self.trainingTabLayout.addStretch()
 
-        # Add tabs
-        self.tabs.addTab(mainScroll, "Warrant Content")
+        #######################################
+        # Establish the previous warrants tab #
+        #######################################
+
+        self.savedWarrantsTab = QWidget()
+        self.savedWarrantsTabLayout = QVBoxLayout()
+        self.savedWarrantsTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.savedWarrantsTab.setLayout(self.savedWarrantsTabLayout)
+        self.savedWarrantsScroll = QScrollArea()
+        self.savedWarrantsScroll.setWidget(self.savedWarrantsTab)
+        self.savedWarrantsScroll.setWidgetResizable(True)
+
+        self.loadOldWarrant = QPushButton()
+        self.loadOldWarrant.setText("Load into Builder")
+        self.loadOldWarrant.clicked.connect( self.load_old_warrant_data )
+
+        self.deleteOldWarrant = QPushButton()
+        self.deleteOldWarrant.setText("Delete Selected Entry")
+        self.deleteOldWarrant.clicked.connect(lambda: self.are_you_sure(self.delete_selected_warrant))
+
+        self.deleteAllOldWarrants = QPushButton()
+        self.deleteAllOldWarrants.setText("Delete All History")
+        self.deleteAllOldWarrants.clicked.connect(lambda: self.are_you_sure(self.delete_all_old_warrants))
+
+        self.savedWarrantsMid = QWidget()
+        self.savedWarrantsMidLayout = QHBoxLayout()
+        self.savedWarrantsMid.setLayout(self.savedWarrantsMidLayout)
+
+        self.file_model = QFileSystemModel()
+        self.file_model.setRootPath("./sources/previousWarrants")
+        self.file_model.setFilter(QDir.Filter.Files | QDir.Filter.NoDotAndDotDot)
+
+        self.savedWarrantLister = QListView()
+        self.savedWarrantLister.setModel(self.file_model)
+        self.savedWarrantLister.setFixedWidth(250)
+        self.savedWarrantLister.setRootIndex(self.file_model.index("./sources/previousWarrants"))
+        self.savedWarrantLister.clicked.connect( self.display_file_content )
+
+        self.savedWarrantPreview = QTextEdit()
+        self.savedWarrantPreview.isReadOnly()
+
+        # Add the widgets to the tab
+        self.savedWarrantsTabLayout.addWidget(QLabel("This tab will allow you to load old warrants you have previously completed with this program back into the builder to make modifications."))
+        self.savedWarrantsTabLayout.addWidget(self.savedWarrantsMid)
+        self.savedWarrantsMidLayout.addWidget(self.savedWarrantLister)
+        self.savedWarrantsMidLayout.addWidget(self.savedWarrantPreview)
+
+        self.savedWarrantsTabLayout.addWidget(self.loadOldWarrant)
+        self.savedWarrantsTabLayout.addWidget(self.deleteOldWarrant)
+        self.savedWarrantsTabLayout.addWidget(self.deleteAllOldWarrants)
+
+
+        ##############################
+        # Add the tabs to the layout #
+        ##############################
+
+        self.tabs.addTab(self.mainScroll, "Warrant Content")
         self.tabs.addTab(self.verbiageScroll, "Template Verbiage")
         self.tabs.addTab(self.trainingScroll, "Training and Experience")
+        self.tabs.addTab(self.savedWarrantsScroll, "Previous Warrants")
         self.setCentralWidget(self.tabs)
+
+
+    # Displays the saved warrant content into the saved warrant tab
+    def display_file_content(self, index):
+        file_name = self.file_model.fileName(index)
+        with open(f"./sources/previousWarrants/{file_name}", "r") as file:
+            loaded_data = json.load(file)
+        formatted_text = {}
+        formatted_text_display = ""
+        formatted_text['Case_Number:'] = loaded_data['CASENUM']
+        formatted_text['Person:'] = loaded_data['SUSPECT']
+        formatted_text['Place:'] = loaded_data['PREMISES']
+        formatted_text['Vehicle:'] = loaded_data['VEHICLE']
+        formatted_text['Crimes:'] = loaded_data['CRIMES']
+        formatted_text['Affidavit:'] = loaded_data['AFFIDAVIT']
+        formatted_text['Property:'] = loaded_data['PROPERTY']
+        for item, content in formatted_text.items():
+            formatted_text_display = formatted_text_display + str(item) + " " + str(content) + "\n"
+        self.savedWarrantPreview.setText(formatted_text_display)
+
+    # Push saved warrant data back out to form
+    def load_old_warrant_data(self):
+        indexes = self.savedWarrantLister.selectedIndexes()
+        if indexes:
+            selected_index = indexes[0]
+            file_name = self.file_model.fileName(selected_index)
+        with open(f"./sources/previousWarrants/{file_name}", "r") as file:
+            loaded_data = json.load(file)
+        self.v['CASENUM'].setText(loaded_data['CASENUM'])
+        self.v['TELEPHONIC'].setChecked(loaded_data['TELEPHONIC'])
+        self.v['RANK'].setCurrentIndex(loaded_data['reload_rank'])
+        self.v['NAME'].setText(loaded_data['NAME'])
+        self.v['BADGE'].setText(loaded_data['BADGE'])
+        self.v['YEARS'].setText(loaded_data['YEARS'])
+        self.v['COUNTY'].setCurrentIndex(loaded_data['reload_county'])
+        self.v['COURT'].setCurrentIndex(loaded_data['reload_court'])
+        self.v['JUDGE'].setText(loaded_data['JUDGE'])
+        self.v['SUSPECT'].setText(loaded_data['SUSPECT'])
+        self.v['PREMISES'].setText(loaded_data['PREMISES'])
+        self.v['VEHICLE'].setText(loaded_data['VEHICLE'])
+        self.v['PROPERTY'].setText(loaded_data['PROPERTY'])
+        # Set the reason checkboxes
+        for i in range(6):
+            if loaded_data[f"reload_r{i}"] == True:
+                self.rCB[int(i)].setChecked(True)
+        self.v['CRIMES'].setText(loaded_data['CRIMES'])
+        self.v['DATE1'].setDate(QDate(loaded_data['reload_date1'][0], loaded_data['reload_date1'][1], loaded_data['reload_date1'][2]))
+        if loaded_data['reload_range'] == True:
+            self.v['DATE2'].setDisabled(False)
+        self.v['DATE2'].setDate(QDate(loaded_data['reload_date2'][0], loaded_data['reload_date2'][1], loaded_data['reload_date2'][2]))
+        self.rangeCheck.setChecked(bool(loaded_data['reload_range']))
+        self.v['AFFIDAVIT'].setText(loaded_data['AFFIDAVIT'])
+        self.v['DAYTIME'].setChecked(loaded_data['reload_daytime'])
+        self.v['NIGHTTIME'].setChecked(loaded_data['reload_nighttime'])
+        if loaded_data['reload_nighttime'] == True:
+            self.v['NIGHTJUSTIFY'].setHidden(False)
+            self.v['NIGHTJUSTIFY'].setText(loaded_data['NIGHTJUSTIFY'])
 
     # Toggles the common verbiage topics
     def toggle_widget(self, checked, target):
@@ -492,10 +591,8 @@ class MainWindow(QMainWindow):
             self.hidden_widget_list[target].show()
         else:
             self.hidden_widget_list[target].hide()
-        #self.verbiageTabLayout.adjustSize()
         self.verbiageScroll.updateGeometry()
-
-    
+     
     # Disables/enables the second dateEdit
     def date_range_enable(self, i):
         if i == True:
@@ -521,32 +618,17 @@ class MainWindow(QMainWindow):
         elif day == 3 or day == 23:
             return str(day) + 'rd'
 
+    # Saves pending changes to the training and experience document
     def saveTrainingChanges(self):
-        confirmation_box = QMessageBox()
-        confirmation_box.setIcon(QMessageBox.Icon.Question)
-        confirmation_box.setWindowTitle("Confirm Submission?")
-        confirmation_box.setText("Are you sure you want to save these changes to your training and experience? You cannot go back if you click 'Yes'.")
-        confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+        with open('./sources/TandE.txt', 'w') as file:
+            file.write(self.trainingContent.toPlainText())
+        self.TandESrc = open('./sources/TandE.txt', 'r').read()
 
-        result = confirmation_box.exec()
-        
-        if result == QMessageBox.StandardButton.Yes:
-            with open('./sources/TandE.txt', 'w') as file:
-                file.write(self.trainingContent.toPlainText())
-            self.TandESrc = open('./sources/TandE.txt', 'r').read()
-
+    # Reloads the current saved training and experience content
     def reloadTrainingContent(self):
-        confirmation_box = QMessageBox()
-        confirmation_box.setIcon(QMessageBox.Icon.Question)
-        confirmation_box.setWindowTitle("Reload current content?")
-        confirmation_box.setText("Are you sure you want to reload the current value of the training and experience file? Any changes that have not been saved will be lost.")
-        confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+        self.trainingContent.setText(self.TandESrc)
 
-        result = confirmation_box.exec()
-        
-        if result == QMessageBox.StandardButton.Yes:
-            self.trainingContent.setText(self.TandESrc)
-
+    # Main form submission function
     def submitForm(self):
         confirmation_box = QMessageBox()
         confirmation_box.setIcon(QMessageBox.Icon.Question)
@@ -574,14 +656,13 @@ class MainWindow(QMainWindow):
                     context[f'{key}DAY_NUMBER'] = self.dateSuffix(widget.date().day())
                     context[f'{key}MONTH'] = widget.date().toString('MMMM')
                     context[f'{key}YEAR'] = widget.date().year()
-                    # Prints the formatted date to check the above function
-                    #print("The date you entered was " + context[f'{key}MONTH'] + ' ' + context[f'{key}DAY_NUMBER'] + ', ' + str(context[f'{key}YEAR']))
                 else:
                     print("You haven't supported this type of widget yet")
             context['TELEPHONIC'] = self.v['TELEPHONIC'].isChecked()
             # Is the date range box checked? Establish the fully formatted date/date range.
             context['ON_OR_BETWEEN'] = ''
             if self.rangeCheck.isChecked() == True:
+                context['RANGECHECKED'] = True
                 if self.v['DATE1'].date().toString() == self.v['DATE2'].date().toString():
                     context['ON_OR_BETWEEN'] = f"on {context['DATE1MONTH']} {context['DATE1DAY_NUMBER']}, {context['DATE1YEAR']}."
                 else:
@@ -590,7 +671,7 @@ class MainWindow(QMainWindow):
                 context['ON_OR_BETWEEN'] = f"on {context['DATE1MONTH']} {context['DATE1DAY_NUMBER']}, {context['DATE1YEAR']}"
 
             # Correctly zeroes out the day/night values and reapplies them according to the checkbox values. In the future this could be simplified by
-            # only grabbing the values if the associated checkbox is checked. Common verbiage will likely force this.
+            # only grabbing the values if the associated checkbox is checked.
             context['DAYTIME'] = ''
             context['NIGHTTIME'] = ''
             context['NIGHTJUSTIFY'] = ''
@@ -604,7 +685,10 @@ class MainWindow(QMainWindow):
             # Compile reasons
             for index, item in enumerate(self.r):
                 if self.rCB[index].isChecked() == True:
+                    context[f'reload_r{index}'] = True
                     self.rHolder = self.rHolder + item + '\n\n'
+                elif self.rCB[index].isChecked() == False:
+                    context[f'reload_r{index}'] = False
             context['PROPERTY_REASONS'] = self.rHolder
 
             # Compile Common Verbiage
@@ -622,15 +706,28 @@ class MainWindow(QMainWindow):
                 context['YEARS'] = context['YEARS'] + ' years'
 
             # Establish unresolved variables
-            
             context['T_AND_E'] = self.TandESrc
             context['DAY_NUMBER'] = self.dateSuffix(datetime.now().day)
             context['MONTH'] = datetime.now().strftime('%B')
             context['YEAR'] = datetime.now().year
 
+            # Establish unresolved re-loading variables
+            context['reload_court'] = self.v['COURT'].currentIndex()
+            context['reload_rank'] = self.v['RANK'].currentIndex()
+            context['reload_county'] = self.v['COUNTY'].currentIndex()
+            context['reload_range'] = self.rangeCheck.isChecked()
+            context['reload_date1'] = [self.v['DATE1'].date().year(), self.v['DATE1'].date().month(), self.v['DATE1'].date().day()]
+            context['reload_date2'] = [self.v['DATE2'].date().year(), self.v['DATE2'].date().month(), self.v['DATE2'].date().day()]
+            context['reload_daytime'] = self.v['DAYTIME'].isChecked()
+            context['reload_nighttime'] = self.v['NIGHTTIME'].isChecked()
+
+            # Actually build the .docx
             self.docOut.render(context, autoescape=True)
             self.output_path = f"./output/{self.v['CASENUM'].text()}-warrant.docx"
             self.docOut.save(self.output_path)
+
+            # Dump the information to JSON for the previous warrants tab
+            self.save_to_previous_warrants(context)
 
             # Confirmation QMessageBox()
             messageComplete = QMessageBox()
@@ -640,46 +737,70 @@ class MainWindow(QMainWindow):
             messageComplete.setStandardButtons(QMessageBox.StandardButton.Ok)
             messageComplete.exec()
 
+
+            # Clear out variables if a second warrant is desired
+            context = ''
+            self.vHolder = ''
+            self.rHolder = ''
+
             # Close window - comment out if second shot at generation is wanted?
-            # If keeping window open, consider checking filename to see if exists and iterate by 1 to avoid crashes.
-            window.close()
+            #window.close()
         else:
             print("Action Canceled")
     
-    def clearForm(self):
+    # Saves dictionary to JSON format in ./sources/previousWarrants/
+    def save_to_previous_warrants(self, context):
+        print("Saving warrant content to sources/previousWarrants/ directory...")
+        with open(f"./sources/previousWarrants/{context['CASENUM']}_{datetime.now().strftime('%H%M%S')}", "w") as file:
+            json.dump(context, file)
+
+    def delete_selected_warrant(self):
+        indexes = self.savedWarrantLister.selectedIndexes()
+        if indexes:
+            selected_index = indexes[0]
+            file_name = self.file_model.fileName(selected_index)
+        os.remove(f"./sources/previousWarrants/{file_name}")
+
+    def delete_all_old_warrants(self):
+        files = glob.glob('./sources/previousWarrants/*')
+        for f in files:
+            os.remove(f)
+
+    def are_you_sure(self, target):
+        # Consider a list of verbiage that can be called dynamically by the calling button to customize the alert?
         confirmation_box = QMessageBox()
         confirmation_box.setIcon(QMessageBox.Icon.Question)
-        confirmation_box.setWindowTitle("Reset Form?")
-        confirmation_box.setText("Are you sure you want to reset the form? You cannot go back if you click 'Yes'.")
+        confirmation_box.setWindowTitle("Attention!")
+        confirmation_box.setText("Are you sure you want to do this? You cannot go back if you click 'Yes'.")
         confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
 
         result = confirmation_box.exec()
 
         if result == QMessageBox.StandardButton.Yes:
-            for widget in window.findChildren(QWidget):
-                if isinstance(widget, QLineEdit):
-                    widget.clear()  # Clear text in QLineEdit
-                elif isinstance(widget, QCheckBox):
-                    widget.setChecked(False)  # Uncheck QCheckBox
-                elif isinstance(widget, QComboBox):
-                    widget.setCurrentIndex(0) 
+            target()
         else:
             print("Action Canceled")
+
+    # Clears form inputs back to initial values
+    def clearForm(self):
+        for widget in window.findChildren(QWidget):
+            if isinstance(widget, QLineEdit):
+                widget.clear()  # Clear text in QLineEdit
+            elif isinstance(widget, QCheckBox):
+                widget.setChecked(False)  # Uncheck QCheckBox
+            elif isinstance(widget, QComboBox):
+                widget.setCurrentIndex(0) 
+            elif isinstance(widget, QTextEdit):
+                widget.clear()
+            elif isinstance(widget, QDateEdit):
+                widget.setDate(QDate.currentDate())
+        self.trainingContent.setText(self.TandESrc)
         
+    # Quits the program   
     def quitForm(self):
-        confirmation_box = QMessageBox()
-        confirmation_box.setIcon(QMessageBox.Icon.Question)
-        confirmation_box.setWindowTitle("Quit Application?")
-        confirmation_box.setText("Are you sure you want to quit the application? You cannot go back if you click 'Yes'.")
-        confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+        window.close()
 
-        result = confirmation_box.exec()
-
-        if result == QMessageBox.StandardButton.Yes:
-            window.close()
-        else:
-            print("Action canceled")
-
+    # Errors out and quits the program if certain resource files are missing
     def errorOut(self, missingNo):
         errorOutMsg = QMessageBox()
         errorOutMsg.setIcon(QMessageBox.Icon.Critical)
@@ -690,6 +811,7 @@ class MainWindow(QMainWindow):
 
 app = QApplication(sys.argv)
 
+#pyi_splash.close()
 window = MainWindow()
 window.show()
 app.setStyle('Fusion')
