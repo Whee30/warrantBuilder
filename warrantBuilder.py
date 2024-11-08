@@ -35,6 +35,8 @@ class MainWindow(QMainWindow):
         # Check for required directories and files        
         if os.path.exists('./output') == False:
             os.mkdir('./output')
+        if os.path.exists('./sources/previousWarrants') == False:
+            os.mkdir('./sources/previousWarrants')
         if os.path.exists('./sources') == False:
             self.errorOut("sources folder")        
         if os.path.exists('./sources/TandE.txt') == False:
@@ -755,11 +757,17 @@ class MainWindow(QMainWindow):
             json.dump(context, file)
 
     def delete_selected_warrant(self):
+        file_name = ''
         indexes = self.savedWarrantLister.selectedIndexes()
         if indexes:
             selected_index = indexes[0]
             file_name = self.file_model.fileName(selected_index)
-        os.remove(f"./sources/previousWarrants/{file_name}")
+        if file_name != '':
+            os.remove(f"./sources/previousWarrants/{file_name}")
+            self.savedWarrantPreview.setText('')
+        elif file_name == '':
+            self.nothing_selected()
+
 
     def delete_all_old_warrants(self):
         files = glob.glob('./sources/previousWarrants/*')
@@ -808,6 +816,16 @@ class MainWindow(QMainWindow):
         errorOutMsg.setText(f"The program is missing the {missingNo}. Please get a new copy of the missing item or download the warrantBuilder .zip again. This program will now exit.")
         errorOutMsg.setStandardButtons(QMessageBox.StandardButton.Ok)
         errorOutMsg.exec()
+
+    def nothing_selected(self):
+        # Consider a list of verbiage that can be called dynamically by the calling button to customize the alert?
+        confirmation_box = QMessageBox()
+        confirmation_box.setIcon(QMessageBox.Icon.Question)
+        confirmation_box.setWindowTitle("Attention!")
+        confirmation_box.setText("No file was selected.")
+        confirmation_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+        confirmation_box.exec()
+
 
 app = QApplication(sys.argv)
 
