@@ -1,0 +1,1 @@
+This directory will house the previous warrant data in JSON format. You can purge your history by deleting these or delete them from within the program if you prefer.
