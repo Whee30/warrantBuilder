@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
 
         # Establish the tab position and settings
 
-        self.setWindowTitle("Warrant Builder v2.1")
+        self.setWindowTitle("Warrant Builder v2.2")
         self.setFixedWidth(810)
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
