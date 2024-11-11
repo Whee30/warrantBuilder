@@ -538,7 +538,10 @@ class MainWindow(QMainWindow):
             loaded_data = json.load(file)
         formatted_text = {}
         formatted_text_display = ""
+        formatted_text['Date Created:'] = f"{loaded_data['MONTH']} {loaded_data['DAY_NUMBER']}, {loaded_data['YEAR']}"
         formatted_text['Case_Number:'] = loaded_data['CASENUM']
+        if loaded_data['TELEPHONIC'] == True:
+            formatted_text['Telephonic'] = " warrant"
         formatted_text['Person:'] = loaded_data['SUSPECT']
         formatted_text['Place:'] = loaded_data['PREMISES']
         formatted_text['Vehicle:'] = loaded_data['VEHICLE']
@@ -725,7 +728,8 @@ class MainWindow(QMainWindow):
 
             # Actually build the .docx
             self.docOut.render(context, autoescape=True)
-            self.output_path = f"./output/{self.v['CASENUM'].text()}-warrant.docx"
+            self.output_filename = f"{self.v['CASENUM'].text()}_{datetime.now().strftime('%y%m%d_%H%M%S')}"
+            self.output_path = f"./output/{self.output_filename}.docx"
             self.docOut.save(self.output_path)
 
             # Dump the information to JSON for the previous warrants tab
@@ -735,7 +739,7 @@ class MainWindow(QMainWindow):
             messageComplete = QMessageBox()
             messageComplete.setIcon(QMessageBox.Icon.Information)
             messageComplete.setWindowTitle("Warrant Generated Successfully!")
-            messageComplete.setText(f"The warrant was built successfully! It has been saved to warrantBuilder/output/{self.v['CASENUM'].text()}-warrant.docx. Don't forget to proofread!")
+            messageComplete.setText(f"The warrant was built successfully! It has been saved to: {self.output_path}. Don't forget to proofread!")
             messageComplete.setStandardButtons(QMessageBox.StandardButton.Ok)
             messageComplete.exec()
 
@@ -753,7 +757,7 @@ class MainWindow(QMainWindow):
     # Saves dictionary to JSON format in ./sources/previousWarrants/
     def save_to_previous_warrants(self, context):
         print("Saving warrant content to sources/previousWarrants/ directory...")
-        with open(f"./sources/previousWarrants/{context['CASENUM']}_{datetime.now().strftime('%H%M%S')}", "w") as file:
+        with open(f"./sources/previousWarrants/{self.output_filename}", "w") as file:
             json.dump(context, file)
 
     def delete_selected_warrant(self):
