@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QListView, QFormLayout, QMessageBox, QSizePolicy, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QScrollArea, QDateEdit
-from PyQt6.QtCore import Qt, QDate, QDir, QModelIndex
+from PyQt6.QtCore import Qt, QDate, QDir, QModelIndex, QEvent
 from PyQt6.QtGui import QFileSystemModel
 from docxtpl import DocxTemplate
 import os
@@ -66,8 +66,9 @@ class MainWindow(QMainWindow):
 
         # Establish the tab position and settings
 
-        self.setWindowTitle("Warrant Builder v2.2")
+        self.setWindowTitle("Warrant Builder v2.3")
         self.setFixedWidth(810)
+        self.setMinimumHeight(600)
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.tabs.setMovable(True)
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow):
         self.v['RANK'] = QComboBox()
         self.v['RANK'].addItems(["Ofc.","Det.","Sgt."])
         self.v['RANK'].setFixedWidth(100)
+        self.v['RANK'].installEventFilter(self)
 
         self.v['NAME'] = QLineEdit()
         self.v['NAME'].setFixedWidth(150)
@@ -115,6 +117,7 @@ class MainWindow(QMainWindow):
             "Yavapai",
             "Yuma"
         ])
+        self.v['COUNTY'].installEventFilter(self)
 
         self.v['COURT'] = QComboBox()
         self.v['COURT'].addItems([
@@ -123,6 +126,7 @@ class MainWindow(QMainWindow):
             "Pima County Superior Court"])
         self.v['COURT'].setEditable(True)
         self.v['COURT'].setFixedWidth(200)
+        self.v['COURT'].installEventFilter(self)
 
         self.v['JUDGE'] = QLineEdit()
         self.v['JUDGE'].setFixedWidth(200)
@@ -152,6 +156,7 @@ class MainWindow(QMainWindow):
         self.v['DATE1'].setCalendarPopup(True)
         self.v['DATE1'].setDate(QDate().currentDate())        
         self.v['DATE1'].setButtonSymbols(self.v['DATE1'].ButtonSymbols.NoButtons)
+        self.v['DATE1'].installEventFilter(self)
 
         self.rangeCheck = QCheckBox("Enable Date Range?")
         self.rangeCheck.clicked.connect(self.date_range_enable)
@@ -161,10 +166,15 @@ class MainWindow(QMainWindow):
         self.v['DATE2'].setDate(QDate().currentDate())
         self.v['DATE2'].setButtonSymbols(self.v['DATE2'].ButtonSymbols.NoButtons)
         self.v['DATE2'].setDisabled(True)
+        self.v['DATE2'].installEventFilter(self)
 
         self.v['AFFIDAVIT'] = QTextEdit()
         self.v['AFFIDAVIT'].setPlaceholderText("Enter Affidavit details here")
         self.v['AFFIDAVIT'].setFixedSize(763,300)
+
+        # Future addition
+        #self.nd = "This is the non-disclosure verbiage for the affidavit"
+        #self.nd2 = "This is the non-disclosure verbiage for the warrant"
 
         # r(0)-r(5), reasons for warrant
         self.r = [
@@ -181,6 +191,10 @@ class MainWindow(QMainWindow):
 
         self.v['TELEPHONIC'] = QCheckBox()
         self.v['TELEPHONIC'].setText("Telephonic Warrant")
+
+        # Future addition
+        #self.v['NONDISCLOSURE'] = QCheckBox()
+        #self.v['NONDISCLOSURE'].setText("Include Non-Disclosure verbiage (18 USC § 2703.b)")
 
         self.v['DAYTIME'] = QCheckBox()
         self.v['DAYTIME'].setText("In the Daytime, excluding the time period between 10pm and 6:30am")
@@ -298,7 +312,9 @@ class MainWindow(QMainWindow):
         caseLayout.addWidget(QLabel("Case #:"))
         caseLayout.addWidget(self.v['CASENUM'])
         caseLayout.addWidget(self.v['TELEPHONIC'])
-        caseLayout.addWidget(QLabel("               Fill out all boxes that are needed for your warrant. Proofread the final product."))
+        #caseLayout.addWidget(self.v['NONDISCLOSURE'])
+        caseLayout.addStretch()
+        caseLayout.addWidget(QLabel("Select all that apply. Don't forget to proofread your warrant!"))
         caseLayout.addStretch()
 
         self.mainTabLayout.addWidget(infoWidget)
@@ -480,16 +496,23 @@ class MainWindow(QMainWindow):
         self.savedWarrantsScroll.setWidget(self.savedWarrantsTab)
         self.savedWarrantsScroll.setWidgetResizable(True)
 
+        self.savedButtonContainer = QWidget()
+        self.savedButtonLayout = QHBoxLayout()
+        self.savedButtonContainer.setLayout(self.savedButtonLayout)
+
         self.loadOldWarrant = QPushButton()
         self.loadOldWarrant.setText("Load into Builder")
+        self.loadOldWarrant.setFixedWidth(200)
         self.loadOldWarrant.clicked.connect( self.load_old_warrant_data )
 
         self.deleteOldWarrant = QPushButton()
         self.deleteOldWarrant.setText("Delete Selected Entry")
+        self.deleteOldWarrant.setFixedWidth(200)
         self.deleteOldWarrant.clicked.connect(lambda: self.are_you_sure(self.delete_selected_warrant))
 
         self.deleteAllOldWarrants = QPushButton()
         self.deleteAllOldWarrants.setText("Delete All History")
+        self.deleteAllOldWarrants.setFixedWidth(200)
         self.deleteAllOldWarrants.clicked.connect(lambda: self.are_you_sure(self.delete_all_old_warrants))
 
         self.savedWarrantsMid = QWidget()
@@ -515,9 +538,12 @@ class MainWindow(QMainWindow):
         self.savedWarrantsMidLayout.addWidget(self.savedWarrantLister)
         self.savedWarrantsMidLayout.addWidget(self.savedWarrantPreview)
 
-        self.savedWarrantsTabLayout.addWidget(self.loadOldWarrant)
-        self.savedWarrantsTabLayout.addWidget(self.deleteOldWarrant)
-        self.savedWarrantsTabLayout.addWidget(self.deleteAllOldWarrants)
+        self.savedWarrantsTabLayout.addWidget(self.savedButtonContainer)
+        self.savedButtonLayout.addStretch()
+        self.savedButtonLayout.addWidget(self.loadOldWarrant)
+        self.savedButtonLayout.addWidget(self.deleteOldWarrant)
+        self.savedButtonLayout.addWidget(self.deleteAllOldWarrants)
+        self.savedButtonLayout.addStretch()
 
 
         ##############################
@@ -530,6 +556,10 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.savedWarrantsScroll, "Previous Warrants")
         self.setCentralWidget(self.tabs)
 
+    def eventFilter(self, source, event):
+        if event.type() == QEvent.Type.Wheel:
+            return True
+        return super().eventFilter(source, event)
 
     # Displays the saved warrant content into the saved warrant tab
     def display_file_content(self, index):
@@ -549,15 +579,19 @@ class MainWindow(QMainWindow):
         formatted_text['Affidavit:'] = loaded_data['AFFIDAVIT']
         formatted_text['Property:'] = loaded_data['PROPERTY']
         for item, content in formatted_text.items():
-            formatted_text_display = formatted_text_display + str(item) + " " + str(content) + "\n"
+            formatted_text_display = formatted_text_display + str(item) + " " + str(content) + "\n\n"
         self.savedWarrantPreview.setText(formatted_text_display)
 
     # Push saved warrant data back out to form
     def load_old_warrant_data(self):
+        file_name = ''
         indexes = self.savedWarrantLister.selectedIndexes()
         if indexes:
             selected_index = indexes[0]
             file_name = self.file_model.fileName(selected_index)
+        if file_name == '':
+            self.nothing_selected()
+            return
         with open(f"./sources/previousWarrants/{file_name}", "r") as file:
             loaded_data = json.load(file)
         self.v['CASENUM'].setText(loaded_data['CASENUM'])
@@ -681,11 +715,11 @@ class MainWindow(QMainWindow):
             context['NIGHTTIME'] = ''
             context['NIGHTJUSTIFY'] = ''
             if self.v['DAYTIME'].isChecked() == True:
-                context['DAYTIME'] = self.v['DAYTIME'].text() + '.\n'
+                context['DAYTIME'] = self.v['DAYTIME'].text() + ',\n'
             if self.v['NIGHTTIME'].isChecked() == True:
                 context['NIGHTTIME1'] = self.v['NIGHTTIME'].text() + ' for the following reason(s):\n\n'
                 context['NIGHTJUSTIFY'] = self.v['NIGHTJUSTIFY'].toPlainText()
-                context['NIGHTTIME2'] = self.v['NIGHTTIME'].text() + ', good cause having been shown.\n'
+                context['NIGHTTIME2'] = self.v['NIGHTTIME'].text() + ', good cause having been shown,\n'
             
             # Compile reasons
             for index, item in enumerate(self.r):
@@ -709,6 +743,11 @@ class MainWindow(QMainWindow):
                 context['YEARS'] = '1 year'
             else:
                 context['YEARS'] = context['YEARS'] + ' years'
+
+            # Future addition - Establish the non-disclosure verbiage
+            #if self.v['NONDISCLOSURE'].isChecked():
+            #    context['NONDISCLOSUREREQUEST'] = self.nd
+            #    context['NONDISCLOSUREORDER'] = self.nd2
 
             # Establish unresolved variables
             context['T_AND_E'] = self.TandESrc
@@ -771,7 +810,6 @@ class MainWindow(QMainWindow):
             self.savedWarrantPreview.setText('')
         elif file_name == '':
             self.nothing_selected()
-
 
     def delete_all_old_warrants(self):
         files = glob.glob('./sources/previousWarrants/*')
