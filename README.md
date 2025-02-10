@@ -10,4 +10,6 @@ The common verbiage tab is dynamically populated from a cvSources.py document wh
 
 11/07/24 - Added a previous warrants tab to show previously completed warrants. You can load the previous warrant from JSON back into the builder. Useful for cases involving numerous similar warrants with slightly different details. 
 
+11/30/24 - removed direct references to a specific agency. Script should be modified to associate to your specific agency if you intend on using it. Future plans include... get this... a warrant builder *builder*.
+
 Open to suggestions, this isn't intended as a public release just yet, it is unfinished and built specifically for one agency... however if someone else gets use of it please let me know!

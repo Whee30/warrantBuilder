@@ -101,29 +101,19 @@ class MainWindow(QMainWindow):
 
         self.v['COUNTY'] = QComboBox()
         self.v['COUNTY'].addItems([
-            "Pima",
-            "Pinal",
-            "Maricopa",
-            "Apache",
-            "Cochise",
-            "Coconino",
-            "Gila",
-            "Graham",
-            "Greenlee",
-            "La Paz",
-            "Mohave",
-            "Navajo",
-            "Santa Cruz",
-            "Yavapai",
-            "Yuma"
+            "County One",
+            "County Two",
+            "County Three",
+            "County Four",
+            "County Five"
         ])
         self.v['COUNTY'].installEventFilter(self)
 
         self.v['COURT'] = QComboBox()
         self.v['COURT'].addItems([
-            "Oro Valley Magistrate Court",
-            "Pima County Justice Court",
-            "Pima County Superior Court"])
+            "Your City Magistrate Court",
+            "Your County Justice Court",
+            "Your County Superior Court"])
         self.v['COURT'].setEditable(True)
         self.v['COURT'].setFixedWidth(200)
         self.v['COURT'].installEventFilter(self)
