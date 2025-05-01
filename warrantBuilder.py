@@ -8,7 +8,7 @@ from datetime import datetime
 import importlib.util
 import json
 import glob
-import pyi_splash
+#import pyi_splash
 
 def load_module_from_path(module_name, module_path):
     spec = importlib.util.spec_from_file_location(module_name, module_path)
@@ -861,7 +861,7 @@ class MainWindow(QMainWindow):
 
 app = QApplication(sys.argv)
 
-pyi_splash.close()
+#pyi_splash.close()
 window = MainWindow()
 window.show()
 app.setStyle('Fusion')
