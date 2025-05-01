@@ -1,2 +1,9 @@
 /output/
 /sources/previousWarrants/
+icon.ico
+splash.png
+/win_exe_v2_3/
+/build/
+/.vscode/
+warrantBuilder.spec
+win_exe_v2_3.zip
