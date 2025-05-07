@@ -12,4 +12,6 @@ The common verbiage tab is dynamically populated from a cvSources.py document wh
 
 11/30/24 - removed direct references to a specific agency. Script should be modified to associate to your specific agency if you intend on using it. Future plans include... get this... a warrant builder *builder*.
 
+05/07/25 - working on exporting the court/county/etc customizations to an external JSON so that a self-contained executable can be useful to others who don't want to mess with learning to edit the python.
+
 Open to suggestions, this isn't intended as a public release just yet, it is unfinished and built specifically for one agency... however if someone else gets use of it please let me know!
