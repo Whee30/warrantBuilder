@@ -5,27 +5,23 @@ from PyQt6.QtGui import QFileSystemModel
 from docxtpl import DocxTemplate
 import os
 from datetime import datetime
-import importlib.util
 import json
 import glob
 #import pyi_splash
 
-def load_module_from_path(module_name, module_path):
-    spec = importlib.util.spec_from_file_location(module_name, module_path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-    return module
+settings_json = "./sources/settings.json"
+
+with open(settings_json, 'r') as file:
+    settings_data = json.load(file)
 
 # Get the path to the cvSources.py file (relative to the executable)
-file_path = './sources/cvSources.py'
+cv_json = './sources/cv_sources.json'
 
-sourceList = importlib.util.spec_from_file_location('secondary_script', file_path)
-secondary_script = importlib.util.module_from_spec(sourceList)
-sourceList.loader.exec_module(secondary_script)
+with open(cv_json, 'r') as file:
+    cv_data = json.load(file)
 
 # Access the list
-my_list = secondary_script.cvDict
+#my_list = cv_data['cvDict']
 
 class MainWindow(QMainWindow):
 
@@ -43,8 +39,8 @@ class MainWindow(QMainWindow):
             self.errorOut("TandE.txt")
         if os.path.exists('./sources/skeleton.docx') == False:
             self.errorOut("skeleton.docx")
-        if os.path.exists('./sources/cvSources.py') == False:
-            self.errorOut("cvSources.py")
+        if os.path.exists('./sources/cv_sources.json') == False:
+            self.errorOut("cv_sources.json")
 
         # Training and Experience textfile
         self.TandESrc = open('./sources/TandE.txt', 'r').read()
@@ -66,7 +62,7 @@ class MainWindow(QMainWindow):
 
         # Establish the tab position and settings
 
-        self.setWindowTitle("Warrant Builder v2.3")
+        self.setWindowTitle("Warrant Builder v2.4")
         self.setFixedWidth(810)
         self.setMinimumHeight(600)
         self.tabs = QTabWidget()
@@ -82,7 +78,8 @@ class MainWindow(QMainWindow):
         self.v['CASENUM'].setFixedWidth(100)
 
         self.v['RANK'] = QComboBox()
-        self.v['RANK'].addItems(["Ofc.","Det.","Sgt."])
+        for item in settings_data['rank_options']:
+            self.v['RANK'].addItem(item)
         self.v['RANK'].setFixedWidth(100)
         self.v['RANK'].installEventFilter(self)
 
@@ -100,20 +97,16 @@ class MainWindow(QMainWindow):
         self.v['YEARS'].setFixedWidth(100)
 
         self.v['COUNTY'] = QComboBox()
-        self.v['COUNTY'].addItems([
-            "County One",
-            "County Two",
-            "County Three",
-            "County Four",
-            "County Five"
-        ])
+        for item in settings_data['county_options']:
+            self.v['COUNTY'].addItem(item)
+
         self.v['COUNTY'].installEventFilter(self)
 
         self.v['COURT'] = QComboBox()
-        self.v['COURT'].addItems([
-            "Your City Magistrate Court",
-            "Your County Justice Court",
-            "Your County Superior Court"])
+        
+        for item in settings_data['court_options']:
+            self.v['COURT'].addItem(item)
+        
         self.v['COURT'].setEditable(True)
         self.v['COURT'].setFixedWidth(200)
         self.v['COURT'].installEventFilter(self)
@@ -413,10 +406,11 @@ class MainWindow(QMainWindow):
         self.verbiageTabLayout.addWidget(QLabel("Modify the results to suit your case, if needed."))
         
         # Iterate the template verbiage into checkboxes.
-        for index, item in enumerate(my_list):
-            self.button_list.append(item)
+        for index, key in enumerate(cv_data):
+            self.button_list.append(key)
+            print(key)
             self.button_list[index] = QPushButton()
-            self.button_list[index].setText(item[0])
+            self.button_list[index].setText(cv_data[key][0])
             self.button_list[index].setCheckable(True)
             self.button_list[index].setFixedWidth(200)
             self.button_list[index].clicked.connect( lambda checked, idx=index: self.toggle_widget(checked, idx))
@@ -430,7 +424,7 @@ class MainWindow(QMainWindow):
             listVar_w.setHidden( True )
             self.hidden_widget_list.append(listVar_w)
 
-            for index, listItem in enumerate(item):
+            for index, listItem in enumerate(cv_data[key]):
                 if index > 0:
                     self.verbiage_list.append(listItem)
                     label = QLabel(listItem)
@@ -534,6 +528,19 @@ class MainWindow(QMainWindow):
         self.savedButtonLayout.addWidget(self.deleteOldWarrant)
         self.savedButtonLayout.addWidget(self.deleteAllOldWarrants)
         self.savedButtonLayout.addStretch()
+
+        ##############################
+        # Establish the settings tab #
+        ##############################
+
+        # self.settings_tab = QWidget()
+        # self.settings_tab_layout = QVBoxLayout()
+        # self.settings_tab_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        # self.settings_tab.setLayout(self.savedWarrantsTabLayout)
+
+        # self.settings_label = QLabel("Set options")
+        
+
 
 
         ##############################

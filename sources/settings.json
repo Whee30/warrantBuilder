@@ -1,0 +1,22 @@
+{
+    "county_options": [
+        "County 1",
+        "County 2",
+        "County 3"
+    ],
+    "court_options": [
+        "Magistrate Court",
+        "City Court",
+        "County Court",
+        "Superior Court"
+    ],
+    "rank_options": [
+        "Ofc.",
+        "Det.",
+        "Cpl.",
+        "Sgt.",
+        "Lt."
+    ],
+    "state_name":"Arizona",
+    "agency_name":"Anytown Police Department"
+}

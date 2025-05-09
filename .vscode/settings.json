@@ -1,7 +1,0 @@
-{
-   "python.globalModuleInstallation": true,
-   "editor.tabSize": 3,
-   "editor.tabCompletion": "on",
-   "editor.acceptSuggestionOnEnter": "off",
-   "workbench.tips.enabled": false
-}
