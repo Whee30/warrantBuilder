@@ -113,7 +113,7 @@ class MainWindow(QMainWindow):
 
         self.v['JUDGE'] = QLineEdit()
         self.v['JUDGE'].setFixedWidth(200)
-        self.v['JUDGE'].setPlaceholderText("'Hazel'")
+        self.v['JUDGE'].setPlaceholderText("'J. Judy'")
 
         self.v['SUSPECT'] = QTextEdit()
         self.v['SUSPECT'].setPlaceholderText("Person information including DOB etc.")
@@ -751,6 +751,8 @@ class MainWindow(QMainWindow):
             context['DAY_NUMBER'] = self.dateSuffix(datetime.now().day)
             context['MONTH'] = datetime.now().strftime('%B')
             context['YEAR'] = datetime.now().year
+            context['AGENCY'] = settings_data['agency_name']
+            context['STATE'] = settings_data['state_name']
 
             # Establish unresolved re-loading variables
             context['reload_court'] = self.v['COURT'].currentIndex()
