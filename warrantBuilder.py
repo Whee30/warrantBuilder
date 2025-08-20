@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 import json
 import glob
-#import pyi_splash
+import pyi_splash
 
 settings_json = "./sources/settings.json"
 
@@ -19,9 +19,6 @@ cv_json = './sources/cv_sources.json'
 
 with open(cv_json, 'r') as file:
     cv_data = json.load(file)
-
-# Access the list
-#my_list = cv_data['cvDict']
 
 class MainWindow(QMainWindow):
 
@@ -408,7 +405,6 @@ class MainWindow(QMainWindow):
         # Iterate the template verbiage into checkboxes.
         for index, key in enumerate(cv_data):
             self.button_list.append(key)
-            print(key)
             self.button_list[index] = QPushButton()
             self.button_list[index].setText(cv_data[key][0])
             self.button_list[index].setCheckable(True)
@@ -870,7 +866,7 @@ class MainWindow(QMainWindow):
 
 app = QApplication(sys.argv)
 
-#pyi_splash.close()
+pyi_splash.close()
 window = MainWindow()
 window.show()
 app.setStyle('Fusion')

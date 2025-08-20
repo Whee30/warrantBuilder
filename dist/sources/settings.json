@@ -1,0 +1,33 @@
+{
+    "county_options": [
+        "Pima",
+		"Apache",
+		"Cochise",
+		"Coconino",
+		"Gila",
+		"Graham",
+		"Greenlee",
+		"La Paz",
+		"Maricopa",
+		"Mohave",
+		"Navajo",
+		"Pinal",
+        "Santa Cruz",
+		"Yavapai",
+		"Yuma"
+    ],
+    "court_options": [
+        "Oro Valley Magistrate Court",
+        "Pima County Superior Court",
+        "Tucson City Court"
+    ],
+    "rank_options": [
+        "Det.",
+        "Ofc.",
+        "Lpo.",
+        "Sgt.",
+        "Lt."
+    ],
+    "state_name":"Arizona",
+    "agency_name":"Oro Valley Police Department"
+}
