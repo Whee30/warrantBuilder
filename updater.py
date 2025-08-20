@@ -7,7 +7,7 @@ no_cache_headers = {
     'Cache-Control': 'no-cache'
 }
 
-remote_hash_list = "https://raw.githubusercontent.com/Whee30/program_updater/refs/heads/main/current_hashes.json"
+remote_hash_list = "https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/hash_list.json"
 
 response = requests.get(remote_hash_list, headers=no_cache_headers)
 hash_references = response.json()
