@@ -45,9 +45,11 @@ with open(local_version_list, 'r') as file:
 
 # The files needing hash validation
 remote_files = {
-    "program": "https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/warrantBuilder.py",
-    "verbiage": "https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/cv_sources.json",
-    "template": "https://github.com/Whee30/warrantBuilder/raw/refs/heads/main/sources/skeleton.docx"
+    "program":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/warrantBuilder.py",
+    "verbiage":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/cv_sources.json",
+    "template":"https://github.com/Whee30/warrantBuilder/raw/refs/heads/main/sources/skeleton.docx"
+    "settings":"./sources/settings.json",
+    "local_versions":"./sources/local_version.json"
 }
 
 local_files = {
@@ -205,10 +207,9 @@ class MainWindow(QMainWindow):
             if os.path.exists('./sources/TandE.txt') == False:
                 with open("./sources/TandE.txt", "w") as file:
                     file.write("This is where you include your relevant experience")
-            if os.path.exists('./sources/cv_sources.json') == False:
-                compare_hashes("verbiage")
-            if os.path.exists('./sources/settings.json') == False:
-                compare_hashes
+            for k, v in required_items.items():
+                if os.path.exists(v) == False:
+                    compare_hashes(k)
 
             for k in local_versions.keys():
                 current_widget = getattr(self, f"current_{k}")
