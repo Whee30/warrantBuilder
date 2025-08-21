@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 import json
 import glob
-import pyi_splash
+#import pyi_splash
 
 settings_json = "./sources/settings.json"
 
@@ -526,20 +526,6 @@ class MainWindow(QMainWindow):
         self.savedButtonLayout.addStretch()
 
         ##############################
-        # Establish the settings tab #
-        ##############################
-
-        # self.settings_tab = QWidget()
-        # self.settings_tab_layout = QVBoxLayout()
-        # self.settings_tab_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        # self.settings_tab.setLayout(self.savedWarrantsTabLayout)
-
-        # self.settings_label = QLabel("Set options")
-        
-
-
-
-        ##############################
         # Add the tabs to the layout #
         ##############################
 
@@ -866,7 +852,7 @@ class MainWindow(QMainWindow):
 
 app = QApplication(sys.argv)
 
-pyi_splash.close()
+#pyi_splash.close()
 window = MainWindow()
 window.show()
 app.setStyle('Fusion')

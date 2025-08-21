@@ -1,3 +1,13 @@
+import sys
+from PyQt6.QtWidgets import QApplication, QListView, QFormLayout, QMessageBox, QSizePolicy, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QScrollArea, QDateEdit
+from PyQt6.QtCore import Qt, QDate, QDir, QModelIndex, QEvent
+from PyQt6.QtGui import QFileSystemModel
+from docxtpl import DocxTemplate
+import os
+from datetime import datetime
+import json
+import glob
+#import pyi_splash
 import hashlib
 import json
 import time
@@ -30,41 +40,160 @@ remote_files = {
 }
 
 local_files = {
-    "program":"./dist/warrantBuilder.exe",
+    "program":"./warrantBuilder.py",
     "verbiage":"./sources/cv_sources.json",
     "template":"./sources/skeleton.docx"
 }
 
-def compare_version(k):
-    if local_versions[k] >= remote_versions[k]:
-        print("The versions are equal or the local version is newer")
-    elif local_versions[k] < remote_versions[k]:
-        print("The remote version is newer")
-        compare_hashes(k)
-    #print(f"Local: {local_versions[k]} - Remote: {remote_versions[k]}")
+class MainWindow(QMainWindow):
 
-def compare_hashes(k):
-    hash_to_compare = hash_references[k]
-    remote_sha256_hash = hashlib.sha256()
-    response = requests.get(remote_files[k], headers=no_cache_headers)
-    remote_sha256_hash.update(response.content)
-    if remote_sha256_hash.hexdigest() == hash_to_compare:
-        #replace_file(k)
-        print(f"The hash for {k} matches, it would be replaced")
-    elif remote_sha256_hash.hexdigest() != hash_to_compare:
-        print("The hashes don't match!")
-        print(f"{k} calculated: {remote_sha256_hash.hexdigest()}")
-        print(f"{k} Stored:     {hash_to_compare}")
+    def __init__(self):
+        super().__init__()
 
-def replace_file(k):
-    file_response = requests.get(remote_files[k], headers=no_cache_headers)
-    with open(local_files[k], 'wb') as file:
-        file.write(file_response.content)
-    # update the version number now
-    local_versions[k] = remote_versions[k]
-    with open(local_version_list, 'w') as file:
-        json.dump(local_versions, file, indent=4)
-    print(f"{file} was updated.")
+        self.setWindowTitle("Warrant Builder - Update Utility v0.1")
+        self.setFixedWidth(500)
 
-for k,v in local_files.items():
-    compare_version(k)
+        #####################
+        # ESTABLISH WIDGETS #
+        #####################
+
+        main_label = QLabel("Warrant Builder Update Utility 0.1")
+
+        self.current_program = QLineEdit()
+        self.current_program.setReadOnly(True)
+
+        self.current_verbiage = QLineEdit()
+        self.current_verbiage.setReadOnly(True)
+
+        self.current_template = QLineEdit()
+        self.current_template.setReadOnly(True)
+
+        self.remote_program = QLineEdit()
+        self.remote_program.setReadOnly(True)
+
+        self.remote_verbiage = QLineEdit()
+        self.remote_verbiage.setReadOnly(True)
+
+        self.remote_template = QLineEdit()
+        self.remote_template.setReadOnly(True)
+
+        self.submit_button = QPushButton()
+        self.submit_button.setText("Upgrade!")
+        self.submit_button.setFixedWidth(100)
+        self.submit_button.clicked.connect(lambda: run_update())
+
+        quit_button = QPushButton()
+        quit_button.setText("Quit")
+        quit_button.setFixedWidth(100)
+        quit_button.clicked.connect(QApplication.instance().quit)
+
+        ########################
+        # Establish the layout #
+        ########################
+
+        self.main = QWidget()
+        self.main_layout = QVBoxLayout()
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        self.main.setLayout(self.main_layout)
+
+        self.content = QWidget()
+        self.content_layout = QHBoxLayout()
+        self.content_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.content.setLayout(self.content_layout)
+
+        self.left_side = QWidget()
+        self.left_side_layout = QVBoxLayout()
+        self.left_side_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.left_side.setLayout(self.left_side_layout)
+
+        self.right_side = QWidget()
+        self.right_side_layout = QVBoxLayout()
+        self.right_side_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.right_side.setLayout(self.right_side_layout)
+
+        self.button_row = QWidget()
+        self.button_row_layout = QHBoxLayout()
+        self.button_row_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        self.button_row.setLayout(self.button_row_layout)
+        self.button_row_layout.setSpacing(20)
+
+        #######################
+        # Add widgets to main #
+        #######################
+
+        self.main_layout.addWidget(self.content)
+
+        self.content_layout.addWidget(self.left_side)
+        self.content_layout.addWidget(self.right_side)
+
+        self.main_layout.addWidget(self.button_row)
+
+        self.left_side_layout.addWidget(self.current_program)
+        self.left_side_layout.addWidget(self.current_verbiage)
+        self.left_side_layout.addWidget(self.current_template)
+
+        self.right_side_layout.addWidget(self.remote_program)
+        self.right_side_layout.addWidget(self.remote_verbiage)
+        self.right_side_layout.addWidget(self.remote_template)
+
+        self.button_row_layout.addWidget(self.submit_button)
+        self.button_row_layout.addWidget(quit_button)
+
+        self.setCentralWidget(self.main)
+
+        #######################
+        # Establish Functions #
+        #######################
+
+        def compare_version(k):
+            if local_versions[k] >= remote_versions[k]:
+                print("The versions are equal or the local version is newer")
+            elif local_versions[k] < remote_versions[k]:
+                print("The remote version is newer")
+                compare_hashes(k)
+            #print(f"Local: {local_versions[k]} - Remote: {remote_versions[k]}")
+
+        def compare_hashes(k):
+            hash_to_compare = hash_references[k]
+            remote_sha256_hash = hashlib.sha256()
+            response = requests.get(remote_files[k], headers=no_cache_headers)
+            remote_sha256_hash.update(response.content)
+            if remote_sha256_hash.hexdigest() == hash_to_compare:
+                replace_file(k)
+                print(f"The calculated hash and the comparison hash for {k} matched, it was replaced")
+            elif remote_sha256_hash.hexdigest() != hash_to_compare:
+                print(f"The hashes don't match! The {k} file was not replaced.")
+                print(f"{k} calculated: {remote_sha256_hash.hexdigest()}")
+                print(f"{k} Stored:     {hash_to_compare}")
+
+        def replace_file(k):
+            file_response = requests.get(remote_files[k], headers=no_cache_headers)
+            with open(local_files[k], 'wb') as file:
+                file.write(file_response.content)
+            # update the version number now
+            local_versions[k] = remote_versions[k]
+            with open(local_version_list, 'w') as file:
+                json.dump(local_versions, file, indent=4)
+            print(f"{k} was updated.")
+
+        def run_update():
+            for k, v in local_versions.items():
+                if v < remote_versions[k]:
+                    compare_hashes(k)
+
+        def initial_processing():
+            for k in local_versions.keys():
+                current_widget = getattr(self, f"current_{k}")
+                remote_widget = getattr(self, f"remote_{k}")
+                current_widget.setText(f"Current {k} version: {str(local_versions[k])}")
+                remote_widget.setText(f"Remote {k} version: {str(remote_versions[k])}")
+
+
+        initial_processing()
+app = QApplication(sys.argv)
+
+#pyi_splash.close()
+window = MainWindow()
+window.show()
+app.setStyle('Fusion')
+app.exec()

@@ -1,11 +1,11 @@
 {
     "county_options": [
-        "County 1",
-        "County 2",
+        "pima",
+        "pinal",
         "County 3"
     ],
     "court_options": [
-        "Magistrate Court",
+        "oro valley Magistrate Court",
         "City Court",
         "County Court",
         "Superior Court"
