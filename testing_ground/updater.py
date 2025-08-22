@@ -2,7 +2,6 @@ import sys
 from PyQt6.QtWidgets import QApplication, QListView, QFormLayout, QMessageBox, QSizePolicy, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QScrollArea, QDateEdit
 from PyQt6.QtCore import Qt, QDate, QDir, QModelIndex, QEvent
 from PyQt6.QtGui import QFileSystemModel
-from docxtpl import DocxTemplate
 import os
 from datetime import datetime
 import json
@@ -13,17 +12,21 @@ import json
 import time
 import requests
 
+local_versions = {}
+
 required_items = {
     "output":"./output",
     "sources":"./sources",
     "previousWarrants":"./sources/previousWarrants",
     "TandE":"./sources/TandE.txt",
-    "program":"./warrantBuilder.exe",
+    "program":"./warrantBuilder.py",
     "verbiage":"./sources/cv_sources.json",
     "template":"./sources/skeleton.docx",
     "settings":"./sources/settings.json",
     "local_versions":"./sources/local_version.json"
 }
+
+#local_versions = {}
 
 no_cache_headers = {
     'Cache-Control': 'no-cache'
@@ -31,7 +34,6 @@ no_cache_headers = {
 
 remote_hash_list = f"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/hash_list.json?nocache={int(time.time())}"
 remote_version_list =f"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/remote_version.json?nocache={int(time.time())}"
-local_version_list = "./sources/local_version.json"
 
 h_response = requests.get(remote_hash_list, headers=no_cache_headers)
 hash_references = h_response.json()
@@ -39,25 +41,22 @@ hash_references = h_response.json()
 v_response = requests.get(remote_version_list, headers=no_cache_headers)
 remote_versions = v_response.json()
 
-# Load local version numbers
-with open(local_version_list, 'r') as file:
-    local_versions = json.load(file)
 
 # The files needing hash validation
 remote_files = {
     "program":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/warrantBuilder.py",
     "verbiage":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/cv_sources.json",
-    "template":"https://github.com/Whee30/warrantBuilder/raw/refs/heads/main/sources/skeleton.docx"
-    "settings":"./sources/settings.json",
-    "local_versions":"./sources/local_version.json"
+    "template":"https://github.com/Whee30/warrantBuilder/raw/refs/heads/main/sources/skeleton.docx",
+    "settings":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/settings.json",
+    "local_versions":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/local_version.json"
 }
 
 local_files = {
-    "program":"./warrantBuilder.exe",
+    "program":"./warrantBuilder.py",
     "verbiage":"./sources/cv_sources.json",
     "template":"./sources/skeleton.docx",
     "settings":"./sources/settings.json",
-    "local_versions":"./sources/local_versions.json"
+    "local_versions":"./sources/local_version.json"
 }
 
 class MainWindow(QMainWindow):
@@ -160,13 +159,13 @@ class MainWindow(QMainWindow):
         # Establish Functions #
         #######################
 
-        def compare_version(k):
-            if local_versions[k] >= remote_versions[k]:
-                print("The versions are equal or the local version is newer")
-            elif local_versions[k] < remote_versions[k]:
-                print("The remote version is newer")
-                compare_hashes(k)
-            #print(f"Local: {local_versions[k]} - Remote: {remote_versions[k]}")
+        #def compare_version(k):
+        #    if local_versions[k] >= remote_versions[k]:
+        #        print("The versions are equal or the local version is newer")
+        #    elif local_versions[k] < remote_versions[k]:
+        #        print("The remote version is newer")
+        #        compare_hashes(k)
+        #    #print(f"Local: {local_versions[k]} - Remote: {remote_versions[k]}")
 
         def compare_hashes(k):
             hash_to_compare = hash_references[k]
@@ -185,16 +184,27 @@ class MainWindow(QMainWindow):
             file_response = requests.get(remote_files[k], headers=no_cache_headers)
             with open(local_files[k], 'wb') as file:
                 file.write(file_response.content)
-            # update the version number now
-            local_versions[k] = remote_versions[k]
-            with open(local_version_list, 'w') as file:
-                json.dump(local_versions, file, indent=4)
-            print(f"{k} was updated.")
 
         def run_update():
+            print("run update just ran")
             for k, v in local_versions.items():
                 if v < remote_versions[k]:
                     compare_hashes(k)
+
+        def get_missing_files(k):
+            hash_to_compare = hash_references[k]
+            remote_sha256_hash = hashlib.sha256()
+            response = requests.get(remote_files[k], headers=no_cache_headers)
+            remote_sha256_hash.update(response.content)
+            if remote_sha256_hash.hexdigest() == hash_to_compare:
+                file_response = requests.get(remote_files[k], headers=no_cache_headers)
+                with open(local_files[k], 'wb') as file:
+                    file.write(file_response.content)
+                print(f"The calculated hash and the comparison hash for {k} matched, it was replaced")
+            elif remote_sha256_hash.hexdigest() != hash_to_compare:
+                print(f"The hashes don't match! The {k} file was not replaced.")
+                print(f"{k} calculated: {remote_sha256_hash.hexdigest()}")
+                print(f"{k} Stored:     {hash_to_compare}")
 
         def initial_processing():
             # Check for required directories and files        
@@ -209,13 +219,30 @@ class MainWindow(QMainWindow):
                     file.write("This is where you include your relevant experience")
             for k, v in required_items.items():
                 if os.path.exists(v) == False:
-                    compare_hashes(k)
+                    get_missing_files(k)
 
-            for k in local_versions.keys():
-                current_widget = getattr(self, f"current_{k}")
-                remote_widget = getattr(self, f"remote_{k}")
-                current_widget.setText(f"Current {k} version: {str(local_versions[k])}")
-                remote_widget.setText(f"Remote {k} version: {str(remote_versions[k])}")
+            print("The things all exist.")
+            
+            local_version_list = "./sources/local_version.json"
+
+            # Load local version numbers
+            with open(local_version_list, 'r') as file:
+                local_versions = json.load(file)
+
+            #local_versions[k] = remote_versions[k]
+            #with open(local_version_list, 'w') as file:
+            #    json.dump(local_versions, file, indent=4)
+            
+            self.current_program.setText(f"Current program version: {str(local_versions['program'])}")
+            self.current_verbiage.setText(f"Current verbiage version: {str(local_versions['verbiage'])}")
+            self.current_template.setText(f"Current template version: {str(local_versions['template'])}")
+            self.remote_program.setText(f"Current program version: {str(remote_versions['program'])}")
+            self.remote_verbiage.setText(f"Current verbiage version: {str(remote_versions['verbiage'])}")
+            self.remote_template.setText(f"Current template version: {str(remote_versions['template'])}")
+
+            
+
+
 
 
         initial_processing()
