@@ -6,13 +6,13 @@
         "TandE":"./sources/TandE.txt",
         "verbiage":"./sources/cv_sources.json",
         "template":"./sources/skeleton.docx",
-        "settings":"./sources/settings.json"
+        "settings":"./sources/settings.json",
     },
     "remote_files":{
-        "program":"<remotely hosted file>",
-        "verbiage":"<remotely hosted file>",
-        "template":"<remotely hosted file>",
-        "settings":"<remotely hosted file>"
+        "program":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/warrantBuilder.py",
+        "verbiage":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/cv_sources.json",
+        "template":"https://github.com/Whee30/warrantBuilder/raw/refs/heads/main/sources/skeleton.docx",
+        "settings":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/settings.json"
     },
     "local_files":{
         "program":"./warrantBuilder.exe",
