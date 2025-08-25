@@ -6,7 +6,7 @@
         "TandE":"./sources/TandE.txt",
         "verbiage":"./sources/cv_sources.json",
         "template":"./sources/skeleton.docx",
-        "settings":"./sources/settings.json",
+        "settings":"./sources/settings.json"
     },
     "remote_files":{
         "program":"<remotely hosted file>",
