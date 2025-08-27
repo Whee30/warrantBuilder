@@ -19,5 +19,6 @@
         "verbiage":"./sources/cv_sources.json",
         "template":"./sources/skeleton.docx",
         "settings":"./sources/settings.json"
-    }
+    },
+    "version":"2.5"
 }
