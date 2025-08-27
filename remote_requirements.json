@@ -19,5 +19,5 @@
         "template":"./sources/skeleton.docx",
         "settings":"./sources/settings.json"
     },
-    "version":"2.5"
+    "version":"2.6"
 }
