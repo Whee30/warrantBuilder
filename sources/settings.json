@@ -1,25 +1,11 @@
 {
     "county_options": [
-        "pima",
-        "apache",
-        "Cochise",
-        "Coconino",
-        "Gila",
-        "Graham",
-        "Greenlee",
-        "La Paz",
-        "Maricopa",
-        "Mohave",
-        "Navajo",
-        "Pinal",
-        "Santa Cruz",
-        "Yavapai",
-        "Yuma"
+        "county one",
+        "county two"
     ],
     "court_options": [
-        "Oro Valley Magistrate Court",
-        "Pima County Superior Court",
-        "Tucson City Court"
+        "City Court",
+        "County Court"
     ],
     "rank_options": [
         "Det.",
@@ -28,6 +14,6 @@
         "Sgt.",
         "Lt."
     ],
-    "state_name":"Arizona",
-    "agency_name":"Oro Valley Police Department"
+    "state_name":"Texas",
+    "agency_name":"Anytown Police Department"
 }
