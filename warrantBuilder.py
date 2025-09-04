@@ -1,65 +1,51 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QListView, QFormLayout, QMessageBox, QSizePolicy, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QScrollArea, QDateEdit
-from PyQt6.QtCore import Qt, QDate, QDir, QModelIndex, QEvent
-from PyQt6.QtGui import QFileSystemModel
+from PyQt6.QtWidgets import QApplication, QStatusBar, QToolBar, QListView, QFormLayout, QMessageBox, QSizePolicy, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QScrollArea, QDateEdit
+from PyQt6.QtCore import Qt, QDate, QDir, QEvent, QSize
+from PyQt6.QtGui import QFileSystemModel, QAction, QIcon, QKeySequence
 from docxtpl import DocxTemplate
 import os
 from datetime import datetime
 import json
 import glob
+import requests
+import hashlib
+import time
 #import pyi_splash
 
-settings_json = "./sources/settings.json"
 
-with open(settings_json, 'r') as file:
-    settings_data = json.load(file)
+# Global variables
+version = 2.5
+remote_refs = "https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/remote_requirements.json"
+hash_refs = "https://www.forrestcook.net/files/hashlist.json"
+t_and_e = ""
+req = {}
+hash_list = {}
+headers = {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+    }
+settings_data = {}
+cvdata = {}
 
-# Get the path to the cvSources.py file (relative to the executable)
-cv_json = './sources/cv_sources.json'
-
-with open(cv_json, 'r') as file:
-    cv_data = json.load(file)
 
 class MainWindow(QMainWindow):
-
     def __init__(self):
         super().__init__()
-
-        # Check for required directories and files        
-        if os.path.exists('./output') == False:
-            os.mkdir('./output')
-        if os.path.exists('./sources/previousWarrants') == False:
-            os.mkdir('./sources/previousWarrants')
-        if os.path.exists('./sources') == False:
-            self.errorOut("sources folder")        
-        if os.path.exists('./sources/TandE.txt') == False:
-            self.errorOut("TandE.txt")
-        if os.path.exists('./sources/skeleton.docx') == False:
-            self.errorOut("skeleton.docx")
-        if os.path.exists('./sources/cv_sources.json') == False:
-            self.errorOut("cv_sources.json")
-
-        # Training and Experience textfile
-        self.TandESrc = open('./sources/TandE.txt', 'r').read()
-
-        # Where the source template file lives
-        self.templatePath = "./sources/skeleton.docx"
-
-        # Output file variable
-        self.docOut = DocxTemplate(self.templatePath)
+        self.initial_prep()
 
         # Declare values dictionary
         self.v = {}
-
         # This variable will hold the property reason checkbox values
         self.rHolder = ''''''
-
         # This variable holds the common verbiage additions
         self.vHolder = ''''''    
+        # Where the source template file lives
+        self.templatePath = "./sources/skeleton.docx"
+        # Output file variable
+        self.docOut = DocxTemplate(self.templatePath)
 
         # Establish the tab position and settings
-
-        self.setWindowTitle("Warrant Builder v2.4")
         self.setFixedWidth(810)
         self.setMinimumHeight(600)
         self.tabs = QTabWidget()
@@ -110,7 +96,7 @@ class MainWindow(QMainWindow):
 
         self.v['JUDGE'] = QLineEdit()
         self.v['JUDGE'].setFixedWidth(200)
-        self.v['JUDGE'].setPlaceholderText("'J. Judy'")
+        self.v['JUDGE'].setPlaceholderText("'A. Smith'")
 
         self.v['SUSPECT'] = QTextEdit()
         self.v['SUSPECT'].setPlaceholderText("Person information including DOB etc.")
@@ -198,14 +184,17 @@ class MainWindow(QMainWindow):
         submitButton = QPushButton()
         submitButton.setText("Submit")
         submitButton.clicked.connect(self.submitForm)
+        submitButton.setStatusTip("Generate the warrant.")
 
         clearButton = QPushButton()
         clearButton.setText("Reset Form")
         clearButton.clicked.connect(lambda: self.are_you_sure(self.clearForm))
+        clearButton.setStatusTip("Reset the form to blank values.")
 
         quitButton = QPushButton()
         quitButton.setText("Quit Program")
-        quitButton.clicked.connect(lambda: self.are_you_sure(self.quitForm))
+        quitButton.clicked.connect(lambda: self.are_you_sure(self.quit_program))
+        quitButton.setStatusTip("Quit the program.")
 
         #########################################
         # Establish the layouts of the main tab #
@@ -294,8 +283,8 @@ class MainWindow(QMainWindow):
         caseLayout.addWidget(self.v['TELEPHONIC'])
         #caseLayout.addWidget(self.v['NONDISCLOSURE'])
         caseLayout.addStretch()
-        caseLayout.addWidget(QLabel("Select all that apply. Don't forget to proofread your warrant!"))
-        caseLayout.addStretch()
+        caseLayout.addWidget(QLabel("Complete all fields that apply. Don't forget to proofread your warrant!\t"))
+        #caseLayout.addStretch()
 
         self.mainTabLayout.addWidget(infoWidget)
 
@@ -433,36 +422,6 @@ class MainWindow(QMainWindow):
                     listVar_l.setSpacing(10)
                     listVar_l.addRow(checkbox, label)
 
-        ###########################################################
-        # Establish the layout of the Training and Experience tab #
-        ###########################################################
-
-        self.trainingTab = QWidget()
-        self.trainingTabLayout = QVBoxLayout()
-        self.trainingTabLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self.trainingTab.setLayout(self.trainingTabLayout)
-        self.trainingScroll = QScrollArea()
-        self.trainingScroll.setWidget(self.trainingTab)
-        self.trainingScroll.setWidgetResizable(True)
-
-        self.trainingContent = QTextEdit()
-        self.trainingContent.setMaximumHeight(300)
-        self.trainingContent.setText(self.TandESrc)
-
-        self.trainingSave = QPushButton()
-        self.trainingSave.setText("Save Changes")
-        self.trainingSave.clicked.connect(lambda: self.are_you_sure(self.saveTrainingChanges))
-
-        self.trainingReload = QPushButton()
-        self.trainingReload.setText("Reload Current Version")
-        self.trainingReload.clicked.connect(lambda: self.are_you_sure(self.reloadTrainingContent))
-
-        self.trainingTabLayout.addWidget(QLabel("If you make changes to this, you must save them for the changes to apper in your warrant."))
-        self.trainingTabLayout.addWidget(QLabel("This is how your training and Experience will look currently:"))
-        self.trainingTabLayout.addWidget(self.trainingContent)
-        self.trainingTabLayout.addWidget(self.trainingSave)
-        self.trainingTabLayout.addWidget(self.trainingReload)
-        self.trainingTabLayout.addStretch()
 
         #######################################
         # Establish the previous warrants tab #
@@ -484,16 +443,19 @@ class MainWindow(QMainWindow):
         self.loadOldWarrant.setText("Load into Builder")
         self.loadOldWarrant.setFixedWidth(200)
         self.loadOldWarrant.clicked.connect( self.load_old_warrant_data )
+        self.loadOldWarrant.setStatusTip("Load the selected warrant into the builder for modification.")
 
         self.deleteOldWarrant = QPushButton()
         self.deleteOldWarrant.setText("Delete Selected Entry")
         self.deleteOldWarrant.setFixedWidth(200)
         self.deleteOldWarrant.clicked.connect(lambda: self.are_you_sure(self.delete_selected_warrant))
+        self.deleteOldWarrant.setStatusTip("Delete the selected warrant from the previous warrants list.")  
 
         self.deleteAllOldWarrants = QPushButton()
         self.deleteAllOldWarrants.setText("Delete All History")
         self.deleteAllOldWarrants.setFixedWidth(200)
         self.deleteAllOldWarrants.clicked.connect(lambda: self.are_you_sure(self.delete_all_old_warrants))
+        self.deleteAllOldWarrants.setStatusTip("Delete all previous warrants from the list.")
 
         self.savedWarrantsMid = QWidget()
         self.savedWarrantsMidLayout = QHBoxLayout()
@@ -531,14 +493,227 @@ class MainWindow(QMainWindow):
 
         self.tabs.addTab(self.mainScroll, "Warrant Content")
         self.tabs.addTab(self.verbiageScroll, "Template Verbiage")
-        self.tabs.addTab(self.trainingScroll, "Training and Experience")
         self.tabs.addTab(self.savedWarrantsScroll, "Previous Warrants")
         self.setCentralWidget(self.tabs)
+        
+
+
+
+
+
+
+
+
+
+
+        ########################
+        # Establish Menu items #
+        ########################
+
+        # Bring training and experience here?
+        # Future home for switching to Subpoena module or warrant return module?
+
+        self.menu_training = QAction("Training and Experience", self)
+        self.menu_training.setStatusTip("Edit or view your training and experience verbiage.")
+        self.menu_training.triggered.connect(self.launch_training)
+
+        self.menu_settings = QAction("Change Settings", self)
+        self.menu_settings.setStatusTip("Change the application settings.")
+        self.menu_settings.triggered.connect(self.launch_settings)
+
+        self.menu_update = QAction("Check for updates", self)
+        self.menu_update.setStatusTip("Check for updates to the warrant builder.")
+        self.menu_update.triggered.connect(self.launch_update)
+
+        self.menu_quit = QAction("Quit the program", self)
+        self.menu_quit.setStatusTip("Quit the program.")
+        self.menu_quit.triggered.connect(self.quit_program)
+
+
+        
+
+        menu_bar = self.menuBar()
+        options_menu = menu_bar.addMenu("Application Menu")
+        options_menu.addAction(self.menu_training)
+        options_menu.addAction(self.menu_settings)
+        options_menu.addAction(self.menu_update)
+        options_menu.addSeparator()
+        options_menu.addAction(self.menu_quit)
+
+
+
+        self.setStatusBar(QStatusBar(self))
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #######################
+    # Establish Functions #
+    #######################
+    # Update Functions    #
+    #######################
+
+# Move the hash comparison code into the replace file function. This way it can be called by anything.
+
+
+
+
+
+
+
+
+
+
+    def initial_prep(self):
+        global t_and_e
+        global hash_list
+        global headers
+        global settings_data
+        global cv_data
+        global req
+        global remote_refs
+        global version
+        print("Running initial prep function")    
+        
+        # Check for locally required directories and files
+        print("checking for local files")        
+        if os.path.exists('./output') == False:
+            os.mkdir('./output')
+        if os.path.exists('./sources') == False:
+            os.mkdir("./sources")
+        if os.path.exists('./sources/previousWarrants') == False:
+            os.mkdir('./sources/previousWarrants')
+        if os.path.exists('./sources/TandE.txt') == False:
+            with open("./sources/TandE.txt", "w") as file:
+                file.write("This is where you include your relevant experience")
+        if os.path.exists('./sources/settings.json') == False:
+            with open("./sources/settings.json", "w") as file:
+                file.write('{\n')
+                file.write('\t"rank_options": ["Ofc.", "Det.", "Sgt."],\n')
+                file.write('\t"county_options": ["County One", "County Two"],\n')
+                file.write('\t"court_options": ["Court One", "Court Two"],\n')
+                file.write('\t"agency_name": "Anytown Police Department",\n')
+                file.write('\t"state_name": "Texas"\n')
+                file.write('}')
+        
+
+        t_and_e = open('./sources/TandE.txt', 'r').read()
+
+        print("Initial Prep - Loading required files...")
+        req_json = "./sources/requirements.json"
+        if os.path.exists(req_json) == False:
+            r_response = requests.get(remote_refs, headers=headers)
+            req = r_response.json()
+            with open(req_json, 'w') as file:
+                json.dump(req, file, indent=4)
+        with open(req_json, 'r') as file:
+            req = json.load(file)
+
+        for k, v in req['local_files'].items():
+            print(f"looping through required files [{k}]")
+            if os.path.exists(v) == False:
+                print(f"{k} not found")
+                if req == {}:
+                    self.get_remote_data()
+                self.replace_file(k)
+
+        # Loads the app settings
+        print("getting settings.json")        
+        settings_json = "./sources/settings.json"
+        with open(settings_json, 'r') as file:
+            settings_data = json.load(file)
+
+        self.setWindowTitle(f"{settings_data['agency_name']} Warrant Builder - v{version}")
+
+        print("getting cvsources")
+        cv_json = './sources/cv_sources.json'
+        with open(cv_json, 'r') as file:
+            cv_data = json.load(file)
+
+
+    def get_remote_data(self):
+        global req
+        global hash_list
+        global remote_refs
+        global hash_refs
+        global headers
+        print("Get remote data function")
+        try:
+            print("grabbing remote requirements")
+            r_response = requests.get(remote_refs, headers=headers)
+            req = r_response.json()
+            h_response = requests.get(hash_refs, headers=headers)
+            hash_list = h_response.json()            
+        except:
+            print("Something failed in run update while gettings json data")
+            return False
+
+    # This function completes the download of files into their expected positions.
+    def replace_file(self, k):
+        global req
+        global hash_list
+        global headers 
+        if hash_list == {}:
+            self.get_remote_data()               
+        hash_to_compare = hash_list[k]
+        remote_sha256_hash = hashlib.sha256()
+        try:
+            response = requests.get(req['remote_files'][k], headers=headers)
+        except:
+            return False
+        remote_sha256_hash.update(response.content)
+        # If the calculated and listed hashes match, the file will be downloaded
+        print(f"remote calculated hash for {k} is: {remote_sha256_hash.hexdigest()}")
+        print(f"remote listed hash for {k} is:     {hash_to_compare}")
+        if remote_sha256_hash.hexdigest() == hash_to_compare:
+            with open(req['remote_files'][k], 'wb') as file:
+                file.write(response.content)
+            print(f"The hashes match and the {k} file was updated.")
+        # If not, the files and hashes should be examined for what's rotten in Denmark
+        else:
+            print(f"The hashes don't match! Something's wonky in dolphin-town. The {k} file was not replaced.")
+            print(f"{k} calculated: {remote_sha256_hash.hexdigest()}")
+            print(f"{k} Stored:     {hash_to_compare}")
+
+
+    #########################
+    # End Initial Functions #
+    #########################
+
+
+
+    # Menu Settings function
+    def launch_settings(self, checked):
+        self.s_w = settings_window()
+        self.s_w.show()
+
+
+    # Menu Update function
+    def launch_update(self, checked):
+        self.u_w = update_window()
+        self.u_w.show()
+
+
+    # Menu Training function
+    def launch_training(self, checked):
+        self.t_w = training_window()
+        self.t_w.show()
+
 
     def eventFilter(self, source, event):
         if event.type() == QEvent.Type.Wheel:
             return True
         return super().eventFilter(source, event)
+
 
     # Displays the saved warrant content into the saved warrant tab
     def display_file_content(self, index):
@@ -560,6 +735,7 @@ class MainWindow(QMainWindow):
         for item, content in formatted_text.items():
             formatted_text_display = formatted_text_display + str(item) + " " + str(content) + "\n\n"
         self.savedWarrantPreview.setText(formatted_text_display)
+
 
     # Push saved warrant data back out to form
     def load_old_warrant_data(self):
@@ -603,6 +779,7 @@ class MainWindow(QMainWindow):
             self.v['NIGHTJUSTIFY'].setHidden(False)
             self.v['NIGHTJUSTIFY'].setText(loaded_data['NIGHTJUSTIFY'])
 
+
     # Toggles the common verbiage topics
     def toggle_widget(self, checked, target):
         if checked:
@@ -611,6 +788,7 @@ class MainWindow(QMainWindow):
             self.hidden_widget_list[target].hide()
         self.verbiageScroll.updateGeometry()
      
+
     # Disables/enables the second dateEdit
     def date_range_enable(self, i):
         if i == True:
@@ -618,12 +796,14 @@ class MainWindow(QMainWindow):
         elif i == False:
             self.v['DATE2'].setDisabled(True)
 
+
     # Disables/enables the night time justification textEdit
     def night_time_click(self, i):
         if i == True:
             self.v['NIGHTJUSTIFY'].setHidden(False)
         elif i == False:
             self.v['NIGHTJUSTIFY'].setHidden(True)
+
 
     # This function will apply the appropriate date suffix "1st", "2nd", "3rd", "4th" etc.
     def dateSuffix(self, day):
@@ -636,28 +816,17 @@ class MainWindow(QMainWindow):
         elif day == 3 or day == 23:
             return str(day) + 'rd'
 
-    # Saves pending changes to the training and experience document
-    def saveTrainingChanges(self):
-        with open('./sources/TandE.txt', 'w') as file:
-            file.write(self.trainingContent.toPlainText())
-        self.TandESrc = open('./sources/TandE.txt', 'r').read()
-
-    # Reloads the current saved training and experience content
-    def reloadTrainingContent(self):
-        self.trainingContent.setText(self.TandESrc)
 
     # Main form submission function
     def submitForm(self):
+        global t_and_e
         confirmation_box = QMessageBox()
         confirmation_box.setIcon(QMessageBox.Icon.Question)
         confirmation_box.setWindowTitle("Confirm Submission?")
         confirmation_box.setText("Are you sure you want to build the warrant? You cannot go back if you click 'Yes'.")
         confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
-
         result = confirmation_box.exec()
-        
         if result == QMessageBox.StandardButton.Yes:
-             
             # Gather the field input and build a dictionary
             context = {}
             for key, widget in self.v.items():
@@ -687,7 +856,6 @@ class MainWindow(QMainWindow):
                     context['ON_OR_BETWEEN'] = f"between {context['DATE1MONTH']} {context['DATE1DAY_NUMBER']}, {context['DATE1YEAR']} and {context['DATE2MONTH']} {context['DATE2DAY_NUMBER']}, {context['DATE2YEAR']}"
             else:
                 context['ON_OR_BETWEEN'] = f"on {context['DATE1MONTH']} {context['DATE1DAY_NUMBER']}, {context['DATE1YEAR']}"
-
             # Correctly zeroes out the day/night values and reapplies them according to the checkbox values. In the future this could be simplified by
             # only grabbing the values if the associated checkbox is checked.
             context['DAYTIME'] = ''
@@ -699,7 +867,6 @@ class MainWindow(QMainWindow):
                 context['NIGHTTIME1'] = self.v['NIGHTTIME'].text() + ' for the following reason(s):\n\n'
                 context['NIGHTJUSTIFY'] = self.v['NIGHTJUSTIFY'].toPlainText()
                 context['NIGHTTIME2'] = self.v['NIGHTTIME'].text() + ', good cause having been shown,\n'
-            
             # Compile reasons
             for index, item in enumerate(self.r):
                 if self.rCB[index].isChecked() == True:
@@ -708,28 +875,24 @@ class MainWindow(QMainWindow):
                 elif self.rCB[index].isChecked() == False:
                     context[f'reload_r{index}'] = False
             context['PROPERTY_REASONS'] = self.rHolder
-
             # Compile Common Verbiage
             context['COMMON_VERBIAGE'] = ''
             for index, item in enumerate(self.verbiage_list):
                 if self.checkbox_list[index].isChecked():
                     self.vHolder = self.vHolder + item + '\n\n'                    
-    
-            context['COMMON_VERBIAGE'] = self.vHolder               
-                   
+            context['COMMON_VERBIAGE'] = self.vHolder                 
             # Establish correct grammar for number of years experience
             if context['YEARS'] == '1':
                 context['YEARS'] = '1 year'
             else:
                 context['YEARS'] = context['YEARS'] + ' years'
-
             # Future addition - Establish the non-disclosure verbiage
             #if self.v['NONDISCLOSURE'].isChecked():
             #    context['NONDISCLOSUREREQUEST'] = self.nd
             #    context['NONDISCLOSUREORDER'] = self.nd2
 
             # Establish unresolved variables
-            context['T_AND_E'] = self.TandESrc
+            context['T_AND_E'] = t_and_e
             context['DAY_NUMBER'] = self.dateSuffix(datetime.now().day)
             context['MONTH'] = datetime.now().strftime('%B')
             context['YEAR'] = datetime.now().year
@@ -763,6 +926,8 @@ class MainWindow(QMainWindow):
             messageComplete.setStandardButtons(QMessageBox.StandardButton.Ok)
             messageComplete.exec()
 
+            # Open the output directory to show the new warrant
+            os.startfile(os.path.abspath('./output'))
 
             # Clear out variables if a second warrant is desired
             context = ''
@@ -778,7 +943,7 @@ class MainWindow(QMainWindow):
     def save_to_previous_warrants(self, context):
         print("Saving warrant content to sources/previousWarrants/ directory...")
         with open(f"./sources/previousWarrants/{self.output_filename}", "w") as file:
-            json.dump(context, file)
+            json.dump(context, file, indent=4)
 
     def delete_selected_warrant(self):
         file_name = ''
@@ -825,20 +990,10 @@ class MainWindow(QMainWindow):
                 widget.clear()
             elif isinstance(widget, QDateEdit):
                 widget.setDate(QDate.currentDate())
-        self.trainingContent.setText(self.TandESrc)
         
     # Quits the program   
-    def quitForm(self):
+    def quit_program(self):
         window.close()
-
-    # Errors out and quits the program if certain resource files are missing
-    def errorOut(self, missingNo):
-        errorOutMsg = QMessageBox()
-        errorOutMsg.setIcon(QMessageBox.Icon.Critical)
-        errorOutMsg.setWindowTitle(f"{missingNo} not found!")
-        errorOutMsg.setText(f"The program is missing the {missingNo}. Please get a new copy of the missing item or download the warrantBuilder .zip again. This program will now exit.")
-        errorOutMsg.setStandardButtons(QMessageBox.StandardButton.Ok)
-        errorOutMsg.exec()
 
     def nothing_selected(self):
         # Consider a list of verbiage that can be called dynamically by the calling button to customize the alert?
@@ -848,6 +1003,431 @@ class MainWindow(QMainWindow):
         confirmation_box.setText("No file was selected.")
         confirmation_box.setStandardButtons(QMessageBox.StandardButton.Ok)
         confirmation_box.exec()
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#############################
+# Establish Settings Window #
+#############################
+
+class settings_window(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.main_widget = QWidget()
+        self.setCentralWidget(self.main_widget)
+        self.setWindowTitle("Warrant Builder Settings")
+
+        self.settings_layout = QVBoxLayout()
+        self.main_widget.setLayout(self.settings_layout)
+
+        self.h_container = QWidget()
+        self.h_container_layout = QHBoxLayout()
+        self.h_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.h_container.setLayout(self.h_container_layout)
+
+        self.h_container_2 = QWidget()
+        self.h_container_2_layout = QHBoxLayout()
+        self.h_container_2_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.h_container_2.setLayout(self.h_container_2_layout)
+        
+        self.s_rank = QWidget()
+        self.s_rank_layout = QVBoxLayout()
+        self.s_rank.setLayout(self.s_rank_layout)
+
+        self.s_court = QWidget()
+        self.s_court_layout = QVBoxLayout()
+        self.s_court.setLayout(self.s_court_layout) 
+        
+        self.s_county = QWidget()
+        self.s_county_layout = QVBoxLayout()
+        self.s_county.setLayout(self.s_county_layout)   
+        
+        self.s_state = QWidget()
+        self.s_state_layout = QVBoxLayout()
+        self.s_state.setLayout(self.s_state_layout)
+        
+        self.s_agency = QWidget()
+        self.s_agency_layout = QVBoxLayout()
+        self.s_agency.setLayout(self.s_agency_layout)
+
+        self.settings_layout.addWidget(QLabel("Warrant Builder Settings:"))
+        self.settings_layout.addWidget(QLabel("The settings that you change here will alter the options available in the warrant builder.\nThe settings must be saved and the program restarted for the settings to take effect.\nSaving changes will automatically shut down the warrant builder."))
+        self.settings_layout.addWidget(self.h_container)
+
+        self.h_container_layout.addWidget(self.s_state)
+        self.s_state_layout.addWidget(QLabel("State name:"))
+        self.s_state_text = QLineEdit()
+        self.s_state_text.setFixedWidth(200)
+        self.s_state_layout.addWidget(self.s_state_text)
+
+        self.h_container_layout.addWidget(self.s_agency)
+        self.s_agency_layout.addWidget(QLabel("Agency name:"))
+        self.s_agency_text = QLineEdit()
+        self.s_agency_text.setFixedWidth(200)   
+        self.s_agency_layout.addWidget(self.s_agency_text)
+
+        self.h_container_layout.addStretch()
+
+        self.settings_layout.addWidget(QLabel("Enter one option per line for the following settings:"))
+        self.settings_layout.addWidget(self.h_container_2)  
+
+        self.h_container_2_layout.addWidget(self.s_rank)
+        self.s_rank_layout.addWidget(QLabel("Rank options:"))
+        self.s_rank_text = QTextEdit()
+        self.s_rank_text.setFixedWidth(100)
+        self.s_rank_text.setFixedHeight(100)
+        self.s_rank_layout.addWidget(self.s_rank_text)
+
+        self.h_container_2_layout.addWidget(self.s_county)
+        self.s_county_layout.addWidget(QLabel("County options:"))
+        self.s_county_text = QTextEdit()
+        self.s_county_text.setFixedWidth(100)
+        self.s_county_text.setFixedHeight(100)
+        self.s_county_layout.addWidget(self.s_county_text)
+
+        self.h_container_2_layout.addWidget(self.s_court)
+        self.s_court_layout.addWidget(QLabel("Court options:"))
+        self.s_court_text = QTextEdit()
+        self.s_court_text.setFixedWidth(200)
+        self.s_court_text.setFixedHeight(100)
+        self.s_court_layout.addWidget(self.s_court_text)
+
+        self.h_container_2_layout.addStretch()
+
+        self.s_buttons = QWidget()
+        self.s_buttons_layout = QHBoxLayout()
+        self.s_buttons.setLayout(self.s_buttons_layout)
+    
+        self.settings_layout.addWidget(self.s_buttons)
+        
+        self.s_submit = QPushButton()
+        self.s_submit.setText("Save and Close")
+        self.s_submit.setFixedWidth(200)
+        self.s_submit.clicked.connect(lambda: self.are_you_sure(self.save_settings))
+        self.s_submit.setStatusTip("Save changes and close the program.")
+
+        self.s_quit = QPushButton()
+        self.s_quit.setText("Close Window")
+        self.s_quit.setFixedWidth(200)
+        self.s_quit.clicked.connect(self.close)
+        self.s_quit.setStatusTip("Close this window without saving changes.")
+
+        self.s_buttons_layout.addStretch()
+        self.s_buttons_layout.addWidget(self.s_submit)
+        self.s_buttons_layout.addWidget(self.s_quit)
+        self.s_buttons_layout.addStretch()
+
+        self.setStatusBar(QStatusBar())
+        self.populate_settings()
+
+
+
+    ################################
+    # Establish settings functions #
+    ################################
+
+    def save_settings(self):
+        print("Save settings")
+        global settings_data
+        settings_data['rank_options'] = self.s_rank_text.toPlainText().splitlines()
+        for line in settings_data['rank_options']:
+            line = line.strip()
+        settings_data['county_options'] = self.s_county_text.toPlainText().splitlines()
+        for line in settings_data['county_options']:
+            line = line.strip()
+        settings_data['court_options'] = self.s_court_text.toPlainText().splitlines()
+        for line in settings_data['court_options']:
+            line = line.strip()
+        settings_data['state_name'] = self.s_state_text.text().strip()
+        settings_data['agency_name'] = self.s_agency_text.text().strip()
+        with open('./sources/settings.json', 'w') as file:
+            json.dump(settings_data, file, indent=4)
+        #self.close()
+        app.quit()
+    
+    def populate_settings(self):
+        global settings_data
+        self.s_rank_text.setText('\n'.join(settings_data['rank_options']))
+        self.s_county_text.setText('\n'.join(settings_data['county_options']))
+        self.s_court_text.setText('\n'.join(settings_data['court_options']))
+        self.s_state_text.setText(settings_data['state_name'])
+        self.s_agency_text.setText(settings_data['agency_name'])
+
+    def are_you_sure(self, target):
+        # Consider a list of verbiage that can be called dynamically by the calling button to customize the alert?
+        confirmation_box = QMessageBox()
+        confirmation_box.setIcon(QMessageBox.Icon.Question)
+        confirmation_box.setWindowTitle("Attention!")
+        confirmation_box.setText("Are you sure you want to do this? You cannot go back if you click 'Yes'.")
+        confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+
+        result = confirmation_box.exec()
+
+        if result == QMessageBox.StandardButton.Yes:
+            target()
+        else:
+            print("Action Canceled")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################################
+# Establish Training and Experience Window #
+############################################
+
+class training_window(QMainWindow):
+    def __init__(self):
+        global t_and_e
+        super().__init__()
+
+        self.main_widget = QWidget()
+        self.setCentralWidget(self.main_widget)
+        self.window().setWindowTitle("Training and Experience Editor")
+
+        self.training_layout = QVBoxLayout()
+        self.training_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.main_widget.setLayout(self.training_layout)
+
+        self.training_content = QTextEdit()
+        self.training_content.setMaximumHeight(300)
+        self.training_content.setText(t_and_e)
+
+        self.training_save = QPushButton()
+        self.training_save.setText("Save Changes")
+        self.training_save.clicked.connect(lambda: self.are_you_sure(self.save_training))
+        self.training_save.setStatusTip("Save any changes made to the training verbiage.")
+
+        self.training_reload = QPushButton()
+        self.training_reload.setText("Reload Current Version")
+        self.training_reload.clicked.connect(self.reload_training)
+        self.training_reload.setStatusTip("Reload the current training verbiage to undo any pending changes.")
+
+        self.training_close = QPushButton()
+        self.training_close.setText("Close Window")
+        self.training_close.clicked.connect(self.close)
+        self.training_close.setStatusTip("Close this window.")
+
+        self.training_layout.addWidget(QLabel("If you make changes to this, you must save them for the changes to appear in your warrant."))
+        self.training_layout.addWidget(QLabel("This is how your training and Experience will look currently:"))
+        self.training_layout.addWidget(self.training_content)
+        self.training_layout.addWidget(self.training_save)
+        self.training_layout.addWidget(self.training_reload)
+        self.training_layout.addWidget(self.training_close)
+        self.training_layout.addStretch()
+
+        self.setStatusBar(QStatusBar())
+    
+    # Saves pending changes to the training and experience document
+    def save_training(self):
+        global t_and_e
+        with open('./sources/TandE.txt', 'w') as file:
+            file.write(self.training_content.toPlainText())
+        t_and_e = open('./sources/TandE.txt', 'r').read()
+        self.close()
+
+    # Reloads the current saved training and experience content
+    def reload_training(self):
+        global t_and_e
+        self.training_content.setText(t_and_e)
+
+    def are_you_sure(self, target):
+        # Consider a list of verbiage that can be called dynamically by the calling button to customize the alert?
+        confirmation_box = QMessageBox()
+        confirmation_box.setIcon(QMessageBox.Icon.Question)
+        confirmation_box.setWindowTitle("Attention!")
+        confirmation_box.setText("Are you sure you want to do this? You cannot go back if you click 'Yes'.")
+        confirmation_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+
+        result = confirmation_box.exec()
+
+        if result == QMessageBox.StandardButton.Yes:
+            target()
+        else:
+            print("Action Canceled")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###########################
+# Establish Update Window #
+###########################
+
+class update_window(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.main_widget = QWidget()
+        self.setCentralWidget(self.main_widget)
+        self.window().setWindowTitle("Update Utility")
+
+        self.update_layout = QVBoxLayout()
+        self.update_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        self.main_widget.setLayout(self.update_layout)
+        self.update_layout.addWidget(QLabel("Checking for updates..."))
+
+        self.update_report = QTextEdit()
+        self.update_report.setReadOnly(True)
+        self.update_layout.addWidget(self.update_report)
+
+        self.update_buttonrow = QWidget()
+        self.update_buttonrow_layout = QHBoxLayout()
+        self.update_buttonrow.setLayout(self.update_buttonrow_layout)
+        self.update_layout.addWidget(self.update_buttonrow)
+
+        self.update_submit = QPushButton()
+        self.update_submit.setText("Check for Updates")
+        self.update_submit.setFixedWidth(200)
+        self.update_submit.clicked.connect(self.run_update)
+        self.update_submit.setStatusTip("Check online for updates to the warrant builder and its resources.")
+
+        self.update_quit = QPushButton()
+        self.update_quit.setText("Close Window")
+        self.update_quit.setFixedWidth(200)
+        self.update_quit.clicked.connect(self.close)
+        self.update_quit.setStatusTip("Close this window.")
+
+        self.update_buttonrow_layout.addWidget(self.update_submit)
+        self.update_buttonrow_layout.addWidget(self.update_quit)
+
+        self.setStatusBar(QStatusBar())
+
+    def run_update(self):
+        global remote_refs
+        global req
+        global hash_refs
+        global hash_list
+        global headers
+        global req
+        print("Running update function")
+        
+        if req == {}:
+            req_json = "./sources/requirements.json"
+            with open(req_json, 'r') as file:
+                req = json.load(file)
+        try:
+            print("grabbing remote requirements and hashes")
+            self.status_update("Getting remote data...")
+            r_response = requests.get(remote_refs, headers=headers)
+            req = r_response.json()
+            self.status_update("Getting remote hash list...")
+            h_response = requests.get(hash_refs, headers=headers)
+            hash_list = h_response.json()            
+        except:
+            self.status_update("Something failed while trying to get remote data. Are you connected to the internet?")
+            print("Something failed in run update while gettings json data")
+            return False
+
+        self.status_update("Checking for remote files...")
+        # Grab the remote requirements json data
+        for k in req['local_files'].keys():
+            print(f"Looping through remote requirements - [{k}]")
+            hash_to_compare = hash_list[k]
+            self.status_update(f"Checking hash for local {k} against remote hash list...")
+            local_sha256_hash = hashlib.sha256()
+            with open(req['local_files'][k], "rb") as file:
+                for byte_block in iter(lambda: file.read(4096), b""):
+                    local_sha256_hash.update(byte_block)
+            print(f"hash to compare for remote {k} is: {hash_to_compare}")
+            print(f"Local calculated hash for {k} is: {local_sha256_hash.hexdigest()}")
+            if local_sha256_hash.hexdigest() != hash_to_compare:
+                self.status_update(f"There is a different {k} file available.")
+                remote_sha256_hash = hashlib.sha256()
+                try:
+                    response = requests.get(req['remote_files'][k], headers=headers)
+                except:
+                    print("run_update failed to get the remote file...")
+                    return False
+                remote_sha256_hash.update(response.content)
+                # If the calculated and listed hashes match, the file will be downloaded
+                print(f"remote calculated hash for {k} is: {remote_sha256_hash.hexdigest()}")
+                print(f"remote listed hash for {k} is:     {hash_to_compare}")
+                if remote_sha256_hash.hexdigest() == hash_to_compare:
+                    with open(req['remote_files'][k], 'wb') as file:
+                        file.write(response.content)
+                    self.status_update(f"The {k} file was updated.")
+                elif remote_sha256_hash.hexdigest() != hash_to_compare:
+                    print(f"The hashes don't match! Something's wonky in dolphin-town. The {k} file was not replaced.")
+                    print(f"{k} calculated: {remote_sha256_hash.hexdigest()}")
+                    print(f"{k} Stored:     {hash_to_compare}")
+                    self.status_update(f"There is a problem with the remote file, {k} was NOT updated.")
+            else:
+                self.status_update(f"The {k} file is already up to date.")
+        self.status_update("Finished checking for updates.")
+        print("run update is done")
+    
+    def status_update(self, message):
+        self.update_report.append(message)
+        QApplication.processEvents()
+
+    
+
 
 
 app = QApplication(sys.argv)
@@ -856,4 +1436,5 @@ app = QApplication(sys.argv)
 window = MainWindow()
 window.show()
 app.setStyle('Fusion')
+
 app.exec()
