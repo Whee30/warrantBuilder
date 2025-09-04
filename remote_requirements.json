@@ -1,12 +1,7 @@
 {
     "required":{
-        "output":"./output",
-        "sources":"./sources",
-        "previousWarrants":"./sources/previousWarrants",
-        "TandE":"./sources/TandE.txt",
         "verbiage":"./sources/cv_sources.json",
-        "template":"./sources/skeleton.docx",
-        "settings":"./sources/settings.json"
+        "template":"./sources/skeleton.docx"
     },
     "remote_files":{
         "program":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/warrantBuilder.exe",
