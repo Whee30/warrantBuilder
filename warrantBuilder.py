@@ -1361,29 +1361,24 @@ class update_window(QMainWindow):
         # Update the program itse
         print(local_version)
         print(req['app_version'])
-        if float(req['app_version']) > local_version:
-            hash_to_compare = hash_list['program']
-            self.status_update(f"Checking hash for local program against remote hash list...")
-            
-            program_hasher = getattr(hashlib, "sha256")()
-            with requests.get(req['program_location'], stream=True) as r:
-                r.raise_for_status()
-                for chunk in r.iter_content(chunk_size=8192):
-                    if chunk:
-                        program_hasher.update(chunk)
-            print(program_hasher.hexdigest())
+        #if float(req['app_version']) > local_version:
+        hash_to_compare = hash_list['program']
+        self.status_update(f"Checking hash for local program against remote hash list...")
+        
+        print(req['program_location'])
+        program_sha256_hash = hashlib.sha256()
+        try:
+            with requests.get(req['program_location'], headers=headers, stream=True, timeout=30) as response:
+                response.raise_for_status()
+                for chunk in response.iter_content(chunk_size=8192):
+                    program_sha256_hash.update(chunk)
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to download file: {e}")
+            return False
 
-            
-            #program_sha256_hash = hashlib.sha256()
-            #try:
-            #    response = requests.get(req['program_location'], headers=headers)
-            #except:
-            #    print("run_update failed to get the remote file...")
-            #    return False
-            #program_sha256_hash.update(response.content)
-            # If the calculated and listed hashes match, the file will be downloaded
-            #print(f"remote calculated hash for program is: {program_sha256_hash.hexdigest()}")
-            #print(f"remote listed hash for program is:     {hash_to_compare}")
+        print(f"remote calculated hash for program is: {program_sha256_hash.hexdigest()}")
+        print(f"remote listed hash for program is:     {hash_to_compare}")
+
             #if program_sha256_hash.hexdigest() == hash_to_compare:
             #    self.status_update("A new warrant builder is being downloaded. You can find it in the same folder as this one.")
             #    self.status_update(f"The new version is called 'warrantBuilder{req['app_version']}.exe'.")
