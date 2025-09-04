@@ -11,13 +11,11 @@
     "remote_files":{
         "program":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/warrantBuilder.exe",
         "verbiage":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/cv_sources.json",
-        "template":"https://github.com/Whee30/warrantBuilder/raw/refs/heads/main/sources/skeleton.docx",
-        "settings":"https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/settings.json"
+        "template":"https://github.com/Whee30/warrantBuilder/raw/refs/heads/main/sources/skeleton.docx"
     },
     "local_files":{
         "verbiage":"./sources/cv_sources.json",
-        "template":"./sources/skeleton.docx",
-        "settings":"./sources/settings.json"
+        "template":"./sources/skeleton.docx"
     },
     "version":"2.6"
 }
