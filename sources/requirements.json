@@ -1,0 +1,12 @@
+{
+    "remote_files":{
+        "verbiage":"https://forrestcook.net/wp-content/uploads/misc/cv_sources.json",
+        "template":"https://forrestcook.net/wp-content/uploads/misc/skeleton.docx"
+    },
+    "local_files":{
+        "verbiage":"./sources/cv_sources.json",
+        "template":"./sources/skeleton.docx"
+    },
+    "app_version":"2.6",
+    "program_location":"https://forrestcook.net/wp-content/uploads/misc/warrantBuilder.zip"
+}

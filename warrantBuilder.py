@@ -15,8 +15,8 @@ import time
 
 # Global variables
 local_version = 2.5
-remote_refs = "https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/remote_requirements.json"
-hash_refs = "https://www.forrestcook.net/files/hashlist.json"
+remote_refs = "https://forrestcook.net/wp-content/uploads/misc/requirements.json"
+hash_refs = "https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/sources/hash_list.json"
 t_and_e = ""
 req = {}
 hash_list = {}
@@ -27,7 +27,7 @@ headers = {
     }
 settings_data = {}
 cvdata = {}
-
+req_json = "./sources/requirements.json"
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -563,6 +563,7 @@ class MainWindow(QMainWindow):
         global settings_data
         global cv_data
         global req
+        global req_json
         global remote_refs
         global local_version
         print("Running initial prep function")    
@@ -599,7 +600,6 @@ class MainWindow(QMainWindow):
         t_and_e = open('./sources/TandE.txt', 'r').read()
 
         print("Initial Prep - Loading required files...")
-        req_json = "./sources/requirements.json"
         if os.path.exists(req_json) == False:
             print("req path not found")
             r_response = requests.get(remote_refs, headers=headers)
@@ -1310,10 +1310,6 @@ class update_window(QMainWindow):
         global local_version
         print("Running update function")
         
-        if req == {}:
-            req_json = "./sources/requirements.json"
-            with open(req_json, 'r') as file:
-                req = json.load(file)
         try:
             print("grabbing remote requirements and hashes")
             self.status_update("Getting remote data...")
@@ -1321,7 +1317,7 @@ class update_window(QMainWindow):
             req = r_response.json()
             self.status_update("Getting remote hash list...")
             h_response = requests.get(hash_refs, headers=headers)
-            hash_list = h_response.json()            
+            hash_list = h_response.json()      
         except:
             self.status_update("Something failed while trying to get remote data. Are you connected to the internet?")
             print("Something failed in run update while gettings json data")
@@ -1352,7 +1348,7 @@ class update_window(QMainWindow):
                 print(f"remote calculated hash for {k} is: {remote_sha256_hash.hexdigest()}")
                 print(f"remote listed hash for {k} is:     {hash_to_compare}")
                 if remote_sha256_hash.hexdigest() == hash_to_compare:
-                    with open(req['remote_files'][k], 'wb') as file:
+                    with open(req['local_files'][k], 'wb') as file:
                         file.write(response.content)
                     self.status_update(f"The {k} file was updated.")
                 elif remote_sha256_hash.hexdigest() != hash_to_compare:
@@ -1362,28 +1358,40 @@ class update_window(QMainWindow):
                     self.status_update(f"There is a problem with the remote file, {k} was NOT updated.")
             else:
                 self.status_update(f"The {k} file is already up to date.")
-        # Update the program itself
+        # Update the program itse
+        print(local_version)
+        print(req['app_version'])
         if float(req['app_version']) > local_version:
             hash_to_compare = hash_list['program']
             self.status_update(f"Checking hash for local program against remote hash list...")
-            remote_sha256_hash = hashlib.sha256()
-            try:
-                response = requests.get(req['program_location'], headers=headers)
-            except:
-                print("run_update failed to get the remote file...")
-                return False
-            remote_sha256_hash.update(response.content)
+            
+            program_hasher = getattr(hashlib, "sha256")()
+            with requests.get(req['program_location'], stream=True) as r:
+                r.raise_for_status()
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        program_hasher.update(chunk)
+            print(program_hasher.hexdigest())
+
+            
+            #program_sha256_hash = hashlib.sha256()
+            #try:
+            #    response = requests.get(req['program_location'], headers=headers)
+            #except:
+            #    print("run_update failed to get the remote file...")
+            #    return False
+            #program_sha256_hash.update(response.content)
             # If the calculated and listed hashes match, the file will be downloaded
-            print(f"remote calculated hash for program is: {remote_sha256_hash.hexdigest()}")
-            print(f"remote listed hash for program is:     {hash_to_compare}")
-            if remote_sha256_hash.hexdigest() == hash_to_compare:
-                self.status_update("A new warrant builder is being downloaded. You can find it in the same folder as this one.")
-                self.status_update(f"The new version is called 'warrantBuilder{req['app_version']}.exe'.")
-                with open(f"warrantBuilder{req['app_version']}.exe", 'wb') as file:
-                    file.write(response.content)
-            else:
-                print("The program hashes don't match!")
-                self.status_update("There is a problem with the remote file, the program was NOT updated.")
+            #print(f"remote calculated hash for program is: {program_sha256_hash.hexdigest()}")
+            #print(f"remote listed hash for program is:     {hash_to_compare}")
+            #if program_sha256_hash.hexdigest() == hash_to_compare:
+            #    self.status_update("A new warrant builder is being downloaded. You can find it in the same folder as this one.")
+            #    self.status_update(f"The new version is called 'warrantBuilder{req['app_version']}.exe'.")
+            #    with open(f"warrantBuilder{req['app_version']}.exe", 'wb') as file:
+            #        file.write(response.content)
+            #else:
+            #    print("The program hashes don't match!")
+            #    self.status_update("There is a problem with the remote file, the program was NOT updated.")
 
         self.status_update("Finished checking for updates.")
         print("run update is done")
