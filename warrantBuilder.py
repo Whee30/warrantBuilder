@@ -1379,14 +1379,14 @@ class update_window(QMainWindow):
         print(f"remote calculated hash for program is: {program_sha256_hash.hexdigest()}")
         print(f"remote listed hash for program is:     {hash_to_compare}")
 
-            #if program_sha256_hash.hexdigest() == hash_to_compare:
-            #    self.status_update("A new warrant builder is being downloaded. You can find it in the same folder as this one.")
-            #    self.status_update(f"The new version is called 'warrantBuilder{req['app_version']}.exe'.")
-            #    with open(f"warrantBuilder{req['app_version']}.exe", 'wb') as file:
-            #        file.write(response.content)
-            #else:
-            #    print("The program hashes don't match!")
-            #    self.status_update("There is a problem with the remote file, the program was NOT updated.")
+        if program_sha256_hash.hexdigest() == hash_to_compare:
+            self.status_update("A new warrant builder is being downloaded. You can find it in the same folder as this one.")
+            self.status_update(f"The new version is called 'warrantBuilder{req['app_version']}.exe'.")
+            with open(f"warrantBuilder{req['app_version']}.exe", 'wb') as file:
+                file.write(response.content)
+        else:
+            print("The program hashes don't match!")
+            self.status_update("There is a problem with the remote file, the program was NOT updated.")
 
         self.status_update("Finished checking for updates.")
         print("run update is done")
