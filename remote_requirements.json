@@ -5,8 +5,8 @@
         "template":"https://github.com/Whee30/warrantBuilder/raw/refs/heads/main/sources/skeleton.docx"
     },
     "local_files":{
-        "program":"./warrantBuilder.txt",
         "verbiage":"./sources/cv_sources.json",
         "template":"./sources/skeleton.docx"
-    }
+    },
+    "app_version":"2.6"
 }
