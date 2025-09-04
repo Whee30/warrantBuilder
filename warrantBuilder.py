@@ -14,7 +14,7 @@ import time
 
 
 # Global variables
-version = 2.5
+local_version = 2.5
 remote_refs = "https://raw.githubusercontent.com/Whee30/warrantBuilder/refs/heads/main/remote_requirements.json"
 hash_refs = "https://www.forrestcook.net/files/hashlist.json"
 t_and_e = ""
@@ -500,12 +500,6 @@ class MainWindow(QMainWindow):
 
 
 
-
-
-
-
-
-
         ########################
         # Establish Menu items #
         ########################
@@ -551,22 +545,11 @@ class MainWindow(QMainWindow):
 
 
 
-
-
-
-
-
     #######################
     # Establish Functions #
     #######################
     # Update Functions    #
     #######################
-
-# Move the hash comparison code into the replace file function. This way it can be called by anything.
-
-
-
-
 
 
 
@@ -581,7 +564,7 @@ class MainWindow(QMainWindow):
         global cv_data
         global req
         global remote_refs
-        global version
+        global local_version
         print("Running initial prep function")    
         
         # Check for locally required directories and files
@@ -605,34 +588,35 @@ class MainWindow(QMainWindow):
                 file.write('\t"state_name": "Texas"\n')
                 file.write('}')
         
+                # Loads the app settings
+        print("getting settings.json")        
+        settings_json = "./sources/settings.json"
+        with open(settings_json, 'r') as file:
+            settings_data = json.load(file)
+
+        self.setWindowTitle(f"{settings_data['agency_name']} Warrant Builder - v{local_version}")
 
         t_and_e = open('./sources/TandE.txt', 'r').read()
 
         print("Initial Prep - Loading required files...")
         req_json = "./sources/requirements.json"
         if os.path.exists(req_json) == False:
+            print("req path not found")
             r_response = requests.get(remote_refs, headers=headers)
             req = r_response.json()
             with open(req_json, 'w') as file:
                 json.dump(req, file, indent=4)
         with open(req_json, 'r') as file:
+            print("req file found")
             req = json.load(file)
+        
+        print(req)
 
         for k, v in req['local_files'].items():
             print(f"looping through required files [{k}]")
             if os.path.exists(v) == False:
                 print(f"{k} not found")
-                if req == {}:
-                    self.get_remote_data()
                 self.replace_file(k)
-
-        # Loads the app settings
-        print("getting settings.json")        
-        settings_json = "./sources/settings.json"
-        with open(settings_json, 'r') as file:
-            settings_data = json.load(file)
-
-        self.setWindowTitle(f"{settings_data['agency_name']} Warrant Builder - v{version}")
 
         print("getting cvsources")
         cv_json = './sources/cv_sources.json'
@@ -675,7 +659,7 @@ class MainWindow(QMainWindow):
         print(f"remote calculated hash for {k} is: {remote_sha256_hash.hexdigest()}")
         print(f"remote listed hash for {k} is:     {hash_to_compare}")
         if remote_sha256_hash.hexdigest() == hash_to_compare:
-            with open(req['remote_files'][k], 'wb') as file:
+            with open(req['local_files'][k], 'wb') as file:
                 file.write(response.content)
             print(f"The hashes match and the {k} file was updated.")
         # If not, the files and hashes should be examined for what's rotten in Denmark
@@ -1014,23 +998,6 @@ class MainWindow(QMainWindow):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #############################
 # Establish Settings Window #
 #############################
@@ -1148,6 +1115,10 @@ class settings_window(QMainWindow):
 
 
 
+
+
+
+    
     ################################
     # Establish settings functions #
     ################################
@@ -1193,24 +1164,6 @@ class settings_window(QMainWindow):
             target()
         else:
             print("Action Canceled")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1305,16 +1258,6 @@ class training_window(QMainWindow):
 
 
 
-
-
-
-
-
-
-
-
-
-
 ###########################
 # Establish Update Window #
 ###########################
@@ -1364,7 +1307,7 @@ class update_window(QMainWindow):
         global hash_refs
         global hash_list
         global headers
-        global req
+        global local_version
         print("Running update function")
         
         if req == {}:
@@ -1419,6 +1362,29 @@ class update_window(QMainWindow):
                     self.status_update(f"There is a problem with the remote file, {k} was NOT updated.")
             else:
                 self.status_update(f"The {k} file is already up to date.")
+        # Update the program itself
+        if float(req['app_version']) > local_version:
+            hash_to_compare = hash_list['program']
+            self.status_update(f"Checking hash for local program against remote hash list...")
+            remote_sha256_hash = hashlib.sha256()
+            try:
+                response = requests.get(req['program_location'], headers=headers)
+            except:
+                print("run_update failed to get the remote file...")
+                return False
+            remote_sha256_hash.update(response.content)
+            # If the calculated and listed hashes match, the file will be downloaded
+            print(f"remote calculated hash for program is: {remote_sha256_hash.hexdigest()}")
+            print(f"remote listed hash for program is:     {hash_to_compare}")
+            if remote_sha256_hash.hexdigest() == hash_to_compare:
+                self.status_update("A new warrant builder is being downloaded. You can find it in the same folder as this one.")
+                self.status_update(f"The new version is called 'warrantBuilder{req['app_version']}.exe'.")
+                with open(f"warrantBuilder{req['app_version']}.exe", 'wb') as file:
+                    file.write(response.content)
+            else:
+                print("The program hashes don't match!")
+                self.status_update("There is a problem with the remote file, the program was NOT updated.")
+
         self.status_update("Finished checking for updates.")
         print("run update is done")
     
@@ -1427,9 +1393,6 @@ class update_window(QMainWindow):
         QApplication.processEvents()
 
     
-
-
-
 app = QApplication(sys.argv)
 
 #pyi_splash.close()
