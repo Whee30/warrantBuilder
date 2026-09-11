@@ -10,6 +10,7 @@ import glob
 import requests
 import hashlib
 import time
+import subprocess
 #import pyi_splash
 
 
@@ -28,6 +29,14 @@ headers = {
 settings_data = {}
 cvdata = {}
 req_json = "./sources/requirements.json"
+
+minisign_public_key = '''
+untrusted comment: signature from minisign secret key
+RUSXSB6hvpsA4k5EhkikzGkfmugIN4ueOzVkQGJ8QDiNjMoQObEl2pG3uAdtMv3mDn/ac+fp9JW8RewTW4P1vNgkLmwaj/4KlQ0=
+trusted comment: timestamp:1780907734	file:../remote_refs.json	hashed
+aQ12acu4dCcp5DRJTNaSpMO/ZG2etJ4Q19qifXb4DsJ3lZatlHlq9EmRkOGSx8oum2Ei4wSuTmwSHyphgA8oAA==
+'''
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -568,12 +577,15 @@ class MainWindow(QMainWindow):
         global local_version
         print("Running initial prep function")    
         
+
+
         # Check for locally required directories and files
         print("checking for local files")        
         if os.path.exists('./output') == False:
             os.mkdir('./output')
         if os.path.exists('./sources') == False:
             os.mkdir("./sources")
+            subprocess.run(["attrib", "+h", r"sources"])
         if os.path.exists('./sources/previousWarrants') == False:
             os.mkdir('./sources/previousWarrants')
         if os.path.exists('./sources/TandE.txt') == False:
@@ -989,15 +1001,6 @@ class MainWindow(QMainWindow):
         confirmation_box.exec()
         
 
-
-
-
-
-
-
-
-
-
 #############################
 # Establish Settings Window #
 #############################
@@ -1166,13 +1169,6 @@ class settings_window(QMainWindow):
             print("Action Canceled")
 
 
-
-
-
-
-
-
-
 ############################################
 # Establish Training and Experience Window #
 ############################################
@@ -1248,16 +1244,6 @@ class training_window(QMainWindow):
             print("Action Canceled")
 
 
-
-
-
-
-
-
-
-
-
-
 ###########################
 # Establish Update Window #
 ###########################
@@ -1311,7 +1297,6 @@ class update_window(QMainWindow):
         print("Running update function")
         
         try:
-            print("grabbing remote requirements and hashes")
             self.status_update("Getting remote addresses...")
             r_response = requests.get(remote_refs, headers=headers)
             req = r_response.json()
