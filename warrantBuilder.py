@@ -8,19 +8,18 @@ from datetime import datetime
 import json
 import glob
 import requests
-import hashlib
 import time
 import subprocess
+import minisign
+import shutil
+import tempfile
 #import pyi_splash
 
 
 # Global variables
 local_version = 2.5
-remote_refs = "<link to hosted file addresses>"
-hash_refs = "<link to hosted hash list>"
 t_and_e = ""
 req = {}
-hash_list = {}
 headers = {
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     'Pragma': 'no-cache',
@@ -28,15 +27,8 @@ headers = {
     }
 settings_data = {}
 cvdata = {}
-req_json = "./sources/requirements.json"
-
-minisign_public_key = '''
-untrusted comment: signature from minisign secret key
-RUSXSB6hvpsA4k5EhkikzGkfmugIN4ueOzVkQGJ8QDiNjMoQObEl2pG3uAdtMv3mDn/ac+fp9JW8RewTW4P1vNgkLmwaj/4KlQ0=
-trusted comment: timestamp:1780907734	file:../remote_refs.json	hashed
-aQ12acu4dCcp5DRJTNaSpMO/ZG2etJ4Q19qifXb4DsJ3lZatlHlq9EmRkOGSx8oum2Ei4wSuTmwSHyphgA8oAA==
-'''
-
+requirements = "./sources/requirements.json"
+public_key = minisign.PublicKey.from_base64("RWSXSB6hvpsA4mlr9wBmopJObFXttfcyvJN6micbhwtMH96qPOyZ84u4")
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -567,13 +559,11 @@ class MainWindow(QMainWindow):
 
     def initial_prep(self):
         global t_and_e
-        global hash_list
         global headers
         global settings_data
         global cv_data
         global req
         global req_json
-        global remote_refs
         global local_version
         print("Running initial prep function")    
         
@@ -612,73 +602,61 @@ class MainWindow(QMainWindow):
         t_and_e = open('./sources/TandE.txt', 'r').read()
 
         print("Initial Prep - Loading required files...")
-        if os.path.exists(req_json) == False:
-            print("req path not found")
-            r_response = requests.get(remote_refs, headers=headers)
-            req = r_response.json()
-            with open(req_json, 'w') as file:
-                json.dump(req, file, indent=4)
-        with open(req_json, 'r') as file:
-            print("req file found")
+        if os.path.exists(requirements) == False:
+            print("requirements path not found")
+            self.replace_file()
+        with open(requirements, 'r') as file:
+            print("requirements file found")
             req = json.load(file)
-        
-        print(req)
 
-        for k, v in req['local_files'].items():
-            print(f"looping through required files [{k}]")
-            if os.path.exists(v) == False:
-                print(f"{k} not found")
-                self.replace_file(k)
+        for k, v in req['files'].items():
+            if k != 'program':
+                temp_path = os.path.join('sources/', v)
+                print(f"looping through required files [{k}]")
+                if os.path.exists(temp_path) == False:
+                    print(f"{k} not found")
+                    self.replace_file(k)
 
-        print("getting cvsources")
+        print("loading cvsources")
         cv_json = './sources/cv_sources.json'
         with open(cv_json, 'r') as file:
             cv_data = json.load(file)
 
 
-    def get_remote_data(self):
-        global req
-        global hash_list
-        global remote_refs
-        global hash_refs
-        global headers
-        print("Get remote data function")
-        try:
-            print("grabbing remote requirements")
-            r_response = requests.get(remote_refs, headers=headers)
-            req = r_response.json()
-            h_response = requests.get(hash_refs, headers=headers)
-            hash_list = h_response.json()            
-        except:
-            print("Something failed in run update while gettings json data")
-            return False
-
     # This function completes the download of files into their expected positions.
-    def replace_file(self, k):
+    def replace_file(self, k=None):
+        print("Replace File function")
         global req
-        global hash_list
         global headers 
-        if hash_list == {}:
-            self.get_remote_data()               
-        hash_to_compare = hash_list[k]
-        remote_sha256_hash = hashlib.sha256()
-        try:
-            response = requests.get(req['remote_files'][k], headers=headers)
-        except:
-            return False
-        remote_sha256_hash.update(response.content)
-        # If the calculated and listed hashes match, the file will be downloaded
-        print(f"remote calculated hash for {k} is: {remote_sha256_hash.hexdigest()}")
-        print(f"remote listed hash for {k} is:     {hash_to_compare}")
-        if remote_sha256_hash.hexdigest() == hash_to_compare:
-            with open(req['local_files'][k], 'wb') as file:
-                file.write(response.content)
-            print(f"The hashes match and the {k} file was updated.")
-        # If not, the files and hashes should be examined for what's rotten in Denmark
+        global public_key
+
+        dest ="sources/"
+        prefix = "https://forrestcook.net/v208/"
+        if k == None:
+            target = 'requirements.json'
         else:
-            print(f"The hashes don't match! Something's wonky in dolphin-town. The {k} file was not replaced.")
-            print(f"{k} calculated: {remote_sha256_hash.hexdigest()}")
-            print(f"{k} Stored:     {hash_to_compare}")
+            target = req['files'][k]
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp_path = f"{tempdir}/{target}"
+            temp_sig = f"{temp_path}.minisig"
+
+            r = requests.get(f"{prefix}{target}")
+            r.raise_for_status()
+            with open(temp_path, 'wb') as f:
+                f.write(r.content)
+
+            r = requests.get(f"{prefix}{target}.minisig")
+            r.raise_for_status()
+            with open(temp_sig, 'wb') as f:
+                f.write(r.content)
+
+            try:
+                public_key.verify_file(temp_path)
+                print(f"{target} signature verified.")
+                shutil.move(temp_path, f"{dest}{target}")
+            except Exception as err:
+                print(f"Verification for {target} failed: {err}")
 
 
     #########################
@@ -986,6 +964,8 @@ class MainWindow(QMainWindow):
                 widget.clear()
             elif isinstance(widget, QDateEdit):
                 widget.setDate(QDate.currentDate())
+        self.v['NIGHTJUSTIFY'].setHidden(True)
+        self.v['DATE2'].setDisabled(True)
         
     # Quits the program   
     def quit_program(self):
@@ -1142,7 +1122,6 @@ class settings_window(QMainWindow):
         settings_data['agency_name'] = self.s_agency_text.text().strip()
         with open('./sources/settings.json', 'w') as file:
             json.dump(settings_data, file, indent=4)
-        #self.close()
         app.quit()
     
     def populate_settings(self):
@@ -1288,116 +1267,47 @@ class update_window(QMainWindow):
         self.setStatusBar(QStatusBar())
 
     def run_update(self):
-        global remote_refs
-        global req
-        global hash_refs
-        global hash_list
-        global headers
-        global local_version
         print("Running update function")
-        
-        try:
-            self.status_update("Getting remote addresses...")
-            r_response = requests.get(remote_refs, headers=headers)
-            req = r_response.json()
-            self.status_update("Getting remote hashes...")
-            h_response = requests.get(hash_refs, headers=headers)
-            hash_list = h_response.json()      
-        except:
-            self.status_update("Something failed while trying to get remote data. Are you connected to the internet?")
-            print("Something failed in run update while gettings json data")
-            return False
+        global public_key
 
-        self.status_update("Checking remote files for updated versions...")
-        # Grab the remote requirements json data
-        for k in req['local_files'].keys():
-            print(f"Looping through remote requirements - [{k}]")
-            hash_to_compare = hash_list[k]
-            self.status_update(f"Checking the local {k} against the remote {k}...")
-            local_sha256_hash = hashlib.sha256()
-            with open(req['local_files'][k], "rb") as file:
-                for byte_block in iter(lambda: file.read(4096), b""):
-                    local_sha256_hash.update(byte_block)
-            print(f"hash to compare for remote {k} is: {hash_to_compare}")
-            print(f"Local calculated hash for {k} is: {local_sha256_hash.hexdigest()}")
-            if local_sha256_hash.hexdigest() != hash_to_compare:
-                self.status_update(f"There is a newer {k} file available...")
-                remote_sha256_hash = hashlib.sha256()
-                try:
-                    response = requests.get(req['remote_files'][k], headers=headers)
-                except:
-                    print("run_update failed to get the remote file...")
-                    self.status_update(f"Something went wrong downloading the new {k}.")
-                    return False
-                remote_sha256_hash.update(response.content)
-                # If the calculated and listed hashes match, the file will be downloaded
-                print(f"remote calculated hash for {k} is: {remote_sha256_hash.hexdigest()}")
-                print(f"remote listed hash for {k} is:     {hash_to_compare}")
-                if remote_sha256_hash.hexdigest() == hash_to_compare:
-                    with open(req['local_files'][k], 'wb') as file:
-                        file.write(response.content)
-                    self.status_update(f"A newer {k} file has been downloaded.")
-                elif remote_sha256_hash.hexdigest() != hash_to_compare:
-                    print(f"The hashes don't match! Something's wonky in dolphin-town. The {k} file was not replaced.")
-                    print(f"{k} calculated: {remote_sha256_hash.hexdigest()}")
-                    print(f"{k} Stored:     {hash_to_compare}")
-                    self.status_update(f"There was a problem with the remote file, {k} was NOT updated.")
-            else:
-                self.status_update(f"The {k} file is already up to date.")
-        # Update the program itself
-        print(local_version)
-        print(req['app_version'])
-        if float(req['app_version']) > local_version:
-            hash_to_compare = hash_list['program']
-            self.status_update(f"Checking the program itself for an update...")
-            self.status_update(f"The current builder version is {local_version}, the version available online is {req['app_version']}.")
-            self.status_update(f"Checking integrity of remote file, this may take a minute or two...")
-            
-            print(req['program_location'])
-            program_sha256_hash = hashlib.sha256()
-            try:
-                with requests.get(req['program_location'], headers=headers, stream=True, timeout=30) as response:
-                    response.raise_for_status()
-                    for chunk in response.iter_content(chunk_size=8192):
-                        program_sha256_hash.update(chunk)
-            except requests.exceptions.RequestException as e:
-                print(f"Failed to verify file: {e}")
-                self.status_update(f"The verification failed: {e}")
-                return False
+        prefix = "https://forrestcook.net/v208/"
+        dest = "sources/"
 
-            print(f"remote calculated hash for program is: {program_sha256_hash.hexdigest()}")
-            print(f"remote listed hash for program is:     {hash_to_compare}")
+        remote_requirements = requests.get(f"{prefix}requirements.json")
+        remote_requirements.raise_for_status()
+        remote_values = remote_requirements.json()
 
-            if program_sha256_hash.hexdigest() == hash_to_compare:
-                self.status_update("The verification succeeded. The new program is downloading. Please be patient...")
-                try:
-                    with requests.get(req['program_location'], headers=headers, stream=True, timeout=30) as response:
-                        response.raise_for_status()
-            
-                        with open(f"warrantBuilder{req['app_version']}.exe", 'wb') as file:
-                            for chunk in response.iter_content(chunk_size=8192):
-                                if chunk:  # Filter out keep-alive chunks
-                                    file.write(chunk)
-                    print(f"File saved successfully as: warrantBuilder{req['app_version']}.exe")
-                    self.status_update(f"The new program was downloaded, it is called 'warrantBuilder{req['app_version']}.exe'.")
-            
-                except requests.exceptions.RequestException as e:
-                    print(f"Failed to download file: {e}")
-                    self.status_update(f"The download failed: {e}")
-                    return False
-                except IOError as e:
-                    print(f"Failed to save file: {e}")
-                    self.status_update(f"The download failed: {e}")
-                    return False
-            else:
-                print("The program hashes don't match!")
-                self.status_update("There is a problem with the remote file, the program was NOT updated.")
-        elif local_version >= req['app_version']:
-            self.status_update(f"The current version is {local_version} and the remote version is {req['app_version']}, no update is needed.")
-        self.status_update("Finished checking for updates.")
-        self.status_update("Reboot the program or launch the new version to apply any changes.")
-        print("run update is done")
-    
+        for k, v in req['versions'].items():
+            self.status_update(f"Remote version of {k} is {remote_values['versions'][k]}, local version is {req['versions'][k]}")
+
+            if req['versions'][k] < remote_values['versions'][k]:
+                temp_file = req['files'][k]
+                self.status_update(f"{k} is out of date!")
+
+                with tempfile.TemporaryDirectory() as tempdir:
+                    temp_path = f"{tempdir}/{temp_file}"
+                    temp_sig = f"{temp_path}.minisig"
+
+                    r = requests.get(f"{prefix}{temp_file}")
+                    r.raise_for_status()
+                    with open(temp_path, 'wb') as f:
+                        f.write(r.content)
+
+                    r = requests.get(f"{prefix}{temp_file}.minisig")
+                    r.raise_for_status()
+                    with open(temp_sig, 'wb') as f:
+                        f.write(r.content)
+
+                    try:
+                        public_key.verify_file(temp_path)
+                        self.status_update(f"{k} signature verified.")
+                        shutil.move(temp_path, f"{dest}{temp_file}")
+                        req['versions'][k] = remote_values['versions'][k]
+                        with open('sources/requirements.json', 'w') as json_reqs:
+                            json.dump(req, json_reqs, indent=4)
+                    except Exception as err:
+                        self.status_update(f"Verification for {k} failed: {err}")
+
     def status_update(self, message):
         self.update_report.append(message)
         QApplication.processEvents()
