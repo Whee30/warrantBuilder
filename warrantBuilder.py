@@ -1,23 +1,46 @@
-import sys
-from PyQt6.QtWidgets import QApplication, QStatusBar, QToolBar, QListView, QFormLayout, QMessageBox, QSizePolicy, QCheckBox, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QLineEdit, QComboBox, QPushButton, QLabel, QTextEdit, QFrame, QScrollArea, QDateEdit
-from PyQt6.QtCore import Qt, QDate, QDir, QEvent, QSize
-from PyQt6.QtGui import QFileSystemModel, QAction, QIcon, QKeySequence
+from PyQt6.QtWidgets import (
+    QApplication, 
+    QStatusBar, 
+    QListView, 
+    QFormLayout, 
+    QMessageBox, 
+    QSizePolicy, 
+    QCheckBox, 
+    QMainWindow, 
+    QWidget, 
+    QVBoxLayout, 
+    QHBoxLayout, 
+    QGridLayout, 
+    QTabWidget, 
+    QLineEdit, 
+    QComboBox, 
+    QPushButton, 
+    QLabel, 
+    QTextEdit, 
+    QFrame, 
+    QScrollArea, 
+    QDateEdit,
+)
+from PyQt6.QtCore import Qt, QDate, QDir, QEvent
+from PyQt6.QtGui import QFileSystemModel, QAction
 from docxtpl import DocxTemplate
+import sys
 import os
+import webbrowser
 from datetime import datetime
 import json
 import glob
 import requests
-import time
 import subprocess
 import minisign
 import shutil
 import tempfile
+import re
 #import pyi_splash
 
 
 # Global variables
-local_version = 2.5
+local_version = "2.7"
 t_and_e = ""
 req = {}
 headers = {
@@ -284,8 +307,7 @@ class MainWindow(QMainWindow):
         caseLayout.addWidget(self.v['TELEPHONIC'])
         #caseLayout.addWidget(self.v['NONDISCLOSURE'])
         caseLayout.addStretch()
-        caseLayout.addWidget(QLabel("Complete all fields that apply. Don't forget to proofread your warrant!\t"))
-        #caseLayout.addStretch()
+        caseLayout.addWidget(QLabel("Complete all fields that apply. Proofread your warrant and modify to suit your case!\t"))
 
         self.mainTabLayout.addWidget(infoWidget)
 
@@ -329,11 +351,12 @@ class MainWindow(QMainWindow):
         # Reason loop
         for index, item in enumerate(self.r):
             label = QLabel(item)
-            label.adjustSize()
             label.setWordWrap(True)
+            #label.adjustSize()
             checkbox = QCheckBox()
             self.rCB.append(checkbox)
             self.rForm_l.addRow(checkbox, label)
+
    
         self.mainTabLayout.addWidget(divider)
 
@@ -473,7 +496,7 @@ class MainWindow(QMainWindow):
         self.savedWarrantLister.clicked.connect( self.display_file_content )
 
         self.savedWarrantPreview = QTextEdit()
-        self.savedWarrantPreview.isReadOnly()
+        self.savedWarrantPreview.setReadOnly(True)
 
         # Add the widgets to the tab
         self.savedWarrantsTabLayout.addWidget(QLabel("This tab will allow you to load old warrants you have previously completed with this program back into the builder to make modifications."))
@@ -497,15 +520,10 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.savedWarrantsScroll, "Previous Warrants")
         self.setCentralWidget(self.tabs)
         
-
-
-
-
         ########################
         # Establish Menu items #
         ########################
 
-        # Bring training and experience here?
         # Future home for switching to Subpoena module or warrant return module?
 
         self.menu_training = QAction("Training and Experience", self)
@@ -524,6 +542,10 @@ class MainWindow(QMainWindow):
         self.menu_quit.setStatusTip("Quit the program.")
         self.menu_quit.triggered.connect(self.quit_program)
 
+        self.menu_ars = QAction("Open ARS Title 13", self)
+        self.menu_ars.setStatusTip("Opens the ARS Title 13 web page")
+        self.menu_ars.triggered.connect(self.open_ars)
+
 
         
 
@@ -532,6 +554,8 @@ class MainWindow(QMainWindow):
         options_menu.addAction(self.menu_training)
         options_menu.addAction(self.menu_settings)
         options_menu.addAction(self.menu_update)
+        options_menu.addSeparator()
+        options_menu.addAction(self.menu_ars)
         options_menu.addSeparator()
         options_menu.addAction(self.menu_quit)
 
@@ -551,7 +575,6 @@ class MainWindow(QMainWindow):
     #######################
     # Update Functions    #
     #######################
-
 
 
 
@@ -623,6 +646,15 @@ class MainWindow(QMainWindow):
             cv_data = json.load(file)
 
 
+
+
+    #########################
+    # End Initial Functions #
+    #########################
+
+    def open_ars(self):
+        webbrowser.open("https://www.azleg.gov/arsDetail/?title=13")
+
     # This function completes the download of files into their expected positions.
     def replace_file(self, k=None):
         print("Replace File function")
@@ -641,28 +673,29 @@ class MainWindow(QMainWindow):
             temp_path = f"{tempdir}/{target}"
             temp_sig = f"{temp_path}.minisig"
 
-            r = requests.get(f"{prefix}{target}")
-            r.raise_for_status()
-            with open(temp_path, 'wb') as f:
-                f.write(r.content)
+            try:
+                r = requests.get(f"{prefix}{target}")
+                r.raise_for_status()
+                with open(temp_path, 'wb') as f:
+                    f.write(r.content)
 
-            r = requests.get(f"{prefix}{target}.minisig")
-            r.raise_for_status()
-            with open(temp_sig, 'wb') as f:
-                f.write(r.content)
-
+                r = requests.get(f"{prefix}{target}.minisig")
+                r.raise_for_status()
+                with open(temp_sig, 'wb') as f:
+                    f.write(r.content)
+            except Exception as err:
+                connection_error = QMessageBox()
+                connection_error.setIcon(QMessageBox.Icon.Critical)
+                connection_error.setWindowTitle("Error!")
+                connection_error.setText(f"There was a problem starting up, some files are missing and cannot be found! If you moved the program out of the original folder, try putting it back.\n\n{str(err)}")
+                connection_error.setStandardButtons(QMessageBox.StandardButton.Ok)
+                connection_error.exec()
             try:
                 public_key.verify_file(temp_path)
                 print(f"{target} signature verified.")
                 shutil.move(temp_path, f"{dest}{target}")
             except Exception as err:
                 print(f"Verification for {target} failed: {err}")
-
-
-    #########################
-    # End Initial Functions #
-    #########################
-
 
 
     # Menu Settings function
@@ -778,7 +811,6 @@ class MainWindow(QMainWindow):
         elif i == False:
             self.v['NIGHTJUSTIFY'].setHidden(True)
 
-
     # This function will apply the appropriate date suffix "1st", "2nd", "3rd", "4th" etc.
     def dateSuffix(self, day):
         if 4 <= day <= 20 or 24 <= day <=30:
@@ -789,7 +821,6 @@ class MainWindow(QMainWindow):
             return str(day) + 'nd'
         elif day == 3 or day == 23:
             return str(day) + 'rd'
-
 
     # Main form submission function
     def submitForm(self):
@@ -807,6 +838,8 @@ class MainWindow(QMainWindow):
                 if isinstance(self.v[key], QComboBox):
                     context[key] = widget.currentText()
                 elif isinstance(self.v[key], QLineEdit):
+                    #temp_sanitized = re.sub(r'[\\/\'"<>&\?%:;#]', '', widget.text())
+                    #context[key] = temp_sanitized
                     context[key] = widget.text()
                 elif isinstance(self.v[key], QCheckBox):
                     context[key] = widget.text()
@@ -883,9 +916,12 @@ class MainWindow(QMainWindow):
             context['reload_daytime'] = self.v['DAYTIME'].isChecked()
             context['reload_nighttime'] = self.v['NIGHTTIME'].isChecked()
 
+            # Remove problematic characters from the case number since it will be a filename/path. Only for the path.
+            safe_path = re.sub(r'[\\/\'"#;|:+=*%?()[\]{}<>&`.^$~]', '', self.v['CASENUM'].text())
+
             # Actually build the .docx
             self.docOut.render(context, autoescape=True)
-            self.output_filename = f"{self.v['CASENUM'].text()}_{datetime.now().strftime('%y%m%d_%H%M%S')}"
+            self.output_filename = f"{safe_path}_{datetime.now().strftime('%y%m%d_%H%M%S')}"
             self.output_path = f"./output/{self.output_filename}.docx"
             self.docOut.save(self.output_path)
 
@@ -908,8 +944,6 @@ class MainWindow(QMainWindow):
             self.vHolder = ''
             self.rHolder = ''
             self.clearForm()
-            # Close window - comment out if second shot at generation is wanted?
-            #window.close()
         else:
             print("Action Canceled")
     
@@ -969,7 +1003,7 @@ class MainWindow(QMainWindow):
         
     # Quits the program   
     def quit_program(self):
-        window.close()
+        self.close()
 
     def nothing_selected(self):
         # Consider a list of verbiage that can be called dynamically by the calling button to customize the alert?
@@ -1095,12 +1129,6 @@ class settings_window(QMainWindow):
 
         self.setStatusBar(QStatusBar())
         self.populate_settings()
-
-
-
-
-
-
     
     ################################
     # Establish settings functions #
@@ -1272,52 +1300,76 @@ class update_window(QMainWindow):
 
         prefix = "https://forrestcook.net/v208/"
         dest = "sources/"
+        self.update_report.clear()
 
-        remote_requirements = requests.get(f"{prefix}requirements.json")
-        remote_requirements.raise_for_status()
-        remote_values = remote_requirements.json()
 
-        for k, v in req['versions'].items():
-            self.status_update(f"Remote version of {k} is {remote_values['versions'][k]}, local version is {req['versions'][k]}")
+        try:
+            remote_requirements = requests.get(f"{prefix}requirements.json")
+            remote_requirements.raise_for_status()
+            remote_values = remote_requirements.json()
+            for k, v in req['versions'].items():
 
-            if req['versions'][k] < remote_values['versions'][k]:
-                temp_file = req['files'][k]
-                self.status_update(f"{k} is out of date!")
+                # self.version_checker(v, remote_values['versions'][k])
 
-                with tempfile.TemporaryDirectory() as tempdir:
-                    temp_path = f"{tempdir}/{temp_file}"
-                    temp_sig = f"{temp_path}.minisig"
+                self.status_update(f"Remote version of {k} is {remote_values['versions'][k]}, local version is {req['versions'][k]}")
 
-                    r = requests.get(f"{prefix}{temp_file}")
-                    r.raise_for_status()
-                    with open(temp_path, 'wb') as f:
-                        f.write(r.content)
+                if req['versions'][k] < remote_values['versions'][k]:
+                    temp_file = remote_values['files'][k]
+                    self.status_update(f"{k} is out of date!")
 
-                    r = requests.get(f"{prefix}{temp_file}.minisig")
-                    r.raise_for_status()
-                    with open(temp_sig, 'wb') as f:
-                        f.write(r.content)
+                    with tempfile.TemporaryDirectory() as tempdir:
+                        temp_path = f"{tempdir}/{temp_file}"
+                        temp_sig = f"{temp_path}.minisig"
 
-                    try:
-                        public_key.verify_file(temp_path)
-                        self.status_update(f"{k} signature verified.")
-                        shutil.move(temp_path, f"{dest}{temp_file}")
-                        req['versions'][k] = remote_values['versions'][k]
-                        with open('sources/requirements.json', 'w') as json_reqs:
-                            json.dump(req, json_reqs, indent=4)
-                    except Exception as err:
-                        self.status_update(f"Verification for {k} failed: {err}")
+                        r = requests.get(f"{prefix}{temp_file}")
+                        r.raise_for_status()
+                        with open(temp_path, 'wb') as f:
+                            f.write(r.content)
+
+                        r = requests.get(f"{prefix}{temp_file}.minisig")
+                        r.raise_for_status()
+                        with open(temp_sig, 'wb') as f:
+                            f.write(r.content)
+
+                        try:
+                            public_key.verify_file(temp_path)
+                            self.status_update(f"{k} signature verified.")
+                            if k == 'program':
+                                shutil.move(temp_path, f"{temp_file}")
+                            else:
+                                shutil.move(temp_path, f"{dest}{temp_file}")
+                            req['versions'][k] = remote_values['versions'][k]
+                            with open('sources/requirements.json', 'w') as json_reqs:
+                                json.dump(req, json_reqs, indent=4)
+                        except Exception as err:
+                            self.status_update(f"Verification for {k} failed: {err}")
+        except Exception as err:
+            self.status_update("Something went wrong:")
+            self.status_update(f"\n{str(err)}")
+
+    # def version_checker(self, a, b):
+    #     temp_asplit = a.split('.')
+    #     temp_bsplit = b.split('.')
+    #     for index, item in enumerate(temp_asplit):
+    #         if int(item) > int(list_b[index]):
+    #             toggle = True
+    #             break
 
     def status_update(self, message):
         self.update_report.append(message)
         QApplication.processEvents()
 
-    
+#####################
+# Non-GUI Functions #
+#####################
+
+
+
 app = QApplication(sys.argv)
 
 #pyi_splash.close()
 window = MainWindow()
-window.show()
 app.setStyle('Fusion')
+window.show()
 
 app.exec()

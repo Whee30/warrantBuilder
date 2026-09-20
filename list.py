@@ -24,11 +24,11 @@ class MainWindow(QMainWindow):
         self.ml = QVBoxLayout(self.main)
         self.setCentralWidget(self.main)     
 
-        list_widget = QListWidget()
-        list_widget.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
-        list_widget.setDragEnabled(True)
-        list_widget.setAcceptDrops(True)
-        list_widget.setDropIndicatorShown(True)
+        self.list_widget = QListWidget()
+        self.list_widget.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.list_widget.setDragEnabled(True)
+        self.list_widget.setAcceptDrops(True)
+        self.list_widget.setDropIndicatorShown(True)
 
         listicle = {'One':"Item One",
                     'Two':"Item Two",
@@ -45,11 +45,23 @@ class MainWindow(QMainWindow):
             k = QListWidgetItem()
             k.setSizeHint(temp_card.sizeHint())
 
-            list_widget.addItem(k)
-            list_widget.setItemWidget(k, temp_card)
+            self.list_widget.addItem(k)
+            self.list_widget.setItemWidget(k, temp_card)
 
-        self.ml.addWidget(list_widget)
-    
+        self.ml.addWidget(self.list_widget)
+
+        self.button_order = QPushButton("What order?")
+        self.button_order.clicked.connect(self.declare_order)
+
+        self.ml.addWidget(self.button_order)
+
+    def declare_order(self):
+        for i in range(self.list_widget.count()):
+            print(self.list_widget.item(i).text())
+
+
+
+         
 app = QApplication(sys.argv)
 
 #pyi_splash.close()
