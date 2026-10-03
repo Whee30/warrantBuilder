@@ -17,15 +17,18 @@
         "Yuma"
     ],
     "court_options": [
-        "Oro Valley Magistrate Court",
+        "Oro Valley Town Court",
         "Pima County Superior Court",
         "Tucson City Court"
     ],
     "rank_options": [
         "Det.",
         "Ofc.",
-        "Inv."
+        "Inv.",
+        "Sgt."
     ],
     "state_name": "Arizona",
-    "agency_name": "Oro Valley Police Department"
+    "agency_name": "Oro Valley Police Department",
+    "resource_link": "https://www.azleg.gov/arsDetail/?title=13",
+    "resource_name": "ARS Title 13"
 }
