@@ -419,7 +419,7 @@ class MainWindow(QMainWindow):
         for index, key in enumerate(cv_data):
             self.button_list.append(key)
             self.button_list[index] = QPushButton()
-            self.button_list[index].setText(cv_data[key][0])
+            self.button_list[index].setText(key)
             self.button_list[index].setCheckable(True)
             self.button_list[index].setFixedWidth(200)
             self.button_list[index].clicked.connect( lambda checked, idx=index: self.toggle_widget(checked, idx))
@@ -434,17 +434,16 @@ class MainWindow(QMainWindow):
             self.hidden_widget_list.append(listVar_w)
 
             for index, listItem in enumerate(cv_data[key]):
-                if index > 0:
-                    self.verbiage_list.append(listItem)
-                    label = QLabel(listItem)
-                    label.setWordWrap(True)
-                    label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
-                    label.setMargin(10)
-                    label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-                    checkbox = QCheckBox()
-                    self.checkbox_list.append(checkbox)
-                    listVar_l.setSpacing(10)
-                    listVar_l.addRow(checkbox, label)
+                self.verbiage_list.append(f"{key},{listItem}")
+                label = QLabel(cv_data[key][listItem]['prop'])
+                label.setWordWrap(True)
+                label.setStyleSheet("border: 2px inset darkGray; border-radius: 10px;")
+                label.setMargin(10)
+                label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+                checkbox = QCheckBox()
+                self.checkbox_list.append(checkbox)
+                listVar_l.setSpacing(10)
+                listVar_l.addRow(checkbox, label)
 
 
         #######################################
@@ -542,11 +541,14 @@ class MainWindow(QMainWindow):
         self.menu_quit.setStatusTip("Quit the program.")
         self.menu_quit.triggered.connect(self.quit_program)
 
-        self.menu_ars = QAction("Open ARS Title 13", self)
-        self.menu_ars.setStatusTip("Opens the ARS Title 13 web page")
-        self.menu_ars.triggered.connect(self.open_ars)
-
-
+        try:
+            self.menu_ars = QAction(settings_data['resource_name'], self)
+            self.menu_ars.setStatusTip(f"Opens {settings_data['resource_link']}")
+            self.menu_ars.triggered.connect(self.open_resource)
+        except:
+            self.menu_ars = QAction("resource link", self)
+            self.menu_ars.setStatusTip("Disabled until a link is saved to the settings")
+            self.menu_ars.setDisabled(True)
         
 
         menu_bar = self.menuBar()
@@ -645,15 +647,12 @@ class MainWindow(QMainWindow):
         with open(cv_json, 'r') as file:
             cv_data = json.load(file)
 
-
-
-
     #########################
     # End Initial Functions #
     #########################
 
-    def open_ars(self):
-        webbrowser.open("https://www.azleg.gov/arsDetail/?title=13")
+    def open_resource(self):
+        webbrowser.open(settings_data['resource_link'])
 
     # This function completes the download of files into their expected positions.
     def replace_file(self, k=None):
@@ -746,6 +745,8 @@ class MainWindow(QMainWindow):
 
     # Push saved warrant data back out to form
     def load_old_warrant_data(self):
+        for cb in self.checkbox_list:
+            cb.setChecked(False)
         file_name = ''
         indexes = self.savedWarrantLister.selectedIndexes()
         if indexes:
@@ -785,7 +786,15 @@ class MainWindow(QMainWindow):
         if loaded_data['reload_nighttime'] == True:
             self.v['NIGHTJUSTIFY'].setHidden(False)
             self.v['NIGHTJUSTIFY'].setText(loaded_data['NIGHTJUSTIFY'])
-
+        try:
+            for item in loaded_data['CV']:
+                try:
+                    temp_index = self.verbiage_list.index(item)
+                    self.checkbox_list[temp_index].setChecked(True)
+                except ValueError:
+                    print("Not found")
+        except KeyError:
+            print("Not found")
 
     # Toggles the common verbiage topics
     def toggle_widget(self, checked, target):
@@ -886,7 +895,8 @@ class MainWindow(QMainWindow):
             context['COMMON_VERBIAGE'] = ''
             for index, item in enumerate(self.verbiage_list):
                 if self.checkbox_list[index].isChecked():
-                    self.vHolder = self.vHolder + item + '\n\n'                    
+                    temp_cat, temp_item = item.split(',')
+                    self.vHolder = self.vHolder + cv_data[temp_cat][temp_item]['prop'] + '\n\n'                    
             context['COMMON_VERBIAGE'] = self.vHolder                 
             # Establish correct grammar for number of years experience
             if context['YEARS'] == '1':
@@ -949,9 +959,15 @@ class MainWindow(QMainWindow):
     
     # Saves dictionary to JSON format in ./sources/previousWarrants/
     def save_to_previous_warrants(self, context):
+        temp_json = context
+        del temp_json['COMMON_VERBIAGE']
+        temp_json['CV'] = []
+        for index, item in enumerate(self.verbiage_list):
+            if self.checkbox_list[index].isChecked():
+                temp_json['CV'].append(item)
         print("Saving warrant content to sources/previousWarrants/ directory...")
         with open(f"./sources/previousWarrants/{self.output_filename}", "w") as file:
-            json.dump(context, file, indent=4)
+            json.dump(temp_json, file, indent=4)
 
     def delete_selected_warrant(self):
         file_name = ''
@@ -969,6 +985,7 @@ class MainWindow(QMainWindow):
         files = glob.glob('./sources/previousWarrants/*')
         for f in files:
             os.remove(f)
+        self.savedWarrantPreview.clear()
 
     def are_you_sure(self, target):
         # Consider a list of verbiage that can be called dynamically by the calling button to customize the alert?
@@ -998,6 +1015,8 @@ class MainWindow(QMainWindow):
                 widget.clear()
             elif isinstance(widget, QDateEdit):
                 widget.setDate(QDate.currentDate())
+        for cb in self.checkbox_list:
+            cb.setChecked(False)
         self.v['NIGHTJUSTIFY'].setHidden(True)
         self.v['DATE2'].setDisabled(True)
         
@@ -1104,6 +1123,16 @@ class settings_window(QMainWindow):
 
         self.h_container_2_layout.addStretch()
 
+        self.settings_layout.addWidget(QLabel("Optional resource webpage link:"))
+        self.resource_link = QLineEdit()
+        self.settings_layout.addWidget(self.resource_link)
+
+        self.settings_layout.addWidget(QLabel("Optional resource webpage name:"))
+        self.resource_name = QLineEdit()
+        self.settings_layout.addWidget(self.resource_name)
+
+
+
         self.s_buttons = QWidget()
         self.s_buttons_layout = QHBoxLayout()
         self.s_buttons.setLayout(self.s_buttons_layout)
@@ -1148,6 +1177,8 @@ class settings_window(QMainWindow):
             line = line.strip()
         settings_data['state_name'] = self.s_state_text.text().strip()
         settings_data['agency_name'] = self.s_agency_text.text().strip()
+        settings_data['resource_link'] = self.resource_link.text().strip()
+        settings_data['resource_name'] = self.resource_name.text().strip()
         with open('./sources/settings.json', 'w') as file:
             json.dump(settings_data, file, indent=4)
         app.quit()
@@ -1159,6 +1190,11 @@ class settings_window(QMainWindow):
         self.s_court_text.setText('\n'.join(settings_data['court_options']))
         self.s_state_text.setText(settings_data['state_name'])
         self.s_agency_text.setText(settings_data['agency_name'])
+        try:
+            self.resource_link.setText(settings_data['resource_link'])
+            self.resource_name.setText(settings_data['resource_name'])
+        except:
+            print('uh oh')
 
     def are_you_sure(self, target):
         # Consider a list of verbiage that can be called dynamically by the calling button to customize the alert?
@@ -1347,23 +1383,9 @@ class update_window(QMainWindow):
             self.status_update("Something went wrong:")
             self.status_update(f"\n{str(err)}")
 
-    # def version_checker(self, a, b):
-    #     temp_asplit = a.split('.')
-    #     temp_bsplit = b.split('.')
-    #     for index, item in enumerate(temp_asplit):
-    #         if int(item) > int(list_b[index]):
-    #             toggle = True
-    #             break
-
     def status_update(self, message):
         self.update_report.append(message)
         QApplication.processEvents()
-
-#####################
-# Non-GUI Functions #
-#####################
-
-
 
 app = QApplication(sys.argv)
 

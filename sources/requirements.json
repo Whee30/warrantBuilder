@@ -1,14 +1,14 @@
 {
     "files": {
-        "program": "warrantBuilder2.7.exe",
+        "program": "warrantBuilder2.8.exe",
         "template": "skeleton.docx",
         "verbiage": "cv_sources.json",
         "reqs": "requirements.json"
     },
     "versions": {
-        "program": 2.7,
+        "program": 2.8,
         "template": 1.0,
-        "verbiage": 1.0,
-        "reqs": 1.1
+        "verbiage": 2.0,
+        "reqs": 1.2
     }
 }
