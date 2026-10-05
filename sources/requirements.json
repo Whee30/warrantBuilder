@@ -1,6 +1,6 @@
 {
     "files": {
-        "program": "warrantBuilder2.8.exe",
+        "program": "filename.exe",
         "template": "skeleton.docx",
         "verbiage": "cv_sources.json",
         "reqs": "requirements.json"

@@ -1,25 +1,13 @@
 {
     "county_options": [
-        "Pima",
-        "Apache",
-        "Cochise",
-        "Coconino",
-        "Gila",
-        "Graham",
-        "Greenlee",
-        "La Paz",
-        "Maricopa",
-        "Mohave",
-        "Navajo",
-        "Pinal",
-        "Santa Cruz",
-        "Yavapai",
-        "Yuma"
+        "County 1",
+        "County 2",
+        "County 3"
     ],
     "court_options": [
-        "Oro Valley Town Court",
-        "Pima County Superior Court",
-        "Tucson City Court"
+        "Town Court",
+        "County Superior Court",
+        "City Court"
     ],
     "rank_options": [
         "Det.",
@@ -28,7 +16,7 @@
         "Sgt."
     ],
     "state_name": "Arizona",
-    "agency_name": "Oro Valley Police Department",
+    "agency_name": "City Police Department",
     "resource_link": "https://www.azleg.gov/arsDetail/?title=13",
     "resource_name": "ARS Title 13"
 }

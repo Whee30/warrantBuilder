@@ -51,7 +51,7 @@ headers = {
 settings_data = {}
 cvdata = {}
 requirements = "./sources/requirements.json"
-public_key = minisign.PublicKey.from_base64("RWSXSB6hvpsA4mlr9wBmopJObFXttfcyvJN6micbhwtMH96qPOyZ84u4")
+# public_key = minisign.PublicKey.from_base64("Insert your public key here")
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -629,7 +629,8 @@ class MainWindow(QMainWindow):
         print("Initial Prep - Loading required files...")
         if os.path.exists(requirements) == False:
             print("requirements path not found")
-            self.replace_file()
+            # If updates and replacements are needed, the files must be placed and these comments must be re-enabled.
+            # self.replace_file()
         with open(requirements, 'r') as file:
             print("requirements file found")
             req = json.load(file)
@@ -640,7 +641,9 @@ class MainWindow(QMainWindow):
                 print(f"looping through required files [{k}]")
                 if os.path.exists(temp_path) == False:
                     print(f"{k} not found")
-                    self.replace_file(k)
+                    # If updates and replacements are needed, the files must be placed and these comments must be re-enabled.
+                    # self.replace_file(k)
+
 
         print("loading cvsources")
         cv_json = './sources/cv_sources.json'
@@ -655,6 +658,7 @@ class MainWindow(QMainWindow):
         webbrowser.open(settings_data['resource_link'])
 
     # This function completes the download of files into their expected positions.
+    # If updates and replacements are needed, the files must be placed and these comments must be re-enabled.
     def replace_file(self, k=None):
         print("Replace File function")
         global req
@@ -662,7 +666,7 @@ class MainWindow(QMainWindow):
         global public_key
 
         dest ="sources/"
-        prefix = "https://forrestcook.net/v208/"
+        prefix = "web server location for stored files"
         if k == None:
             target = 'requirements.json'
         else:
@@ -1317,6 +1321,8 @@ class update_window(QMainWindow):
         self.update_submit.setText("Check for Updates")
         self.update_submit.setFixedWidth(200)
         self.update_submit.clicked.connect(self.run_update)
+        # If updates and replacements are needed, the files must be placed and these comments must be re-enabled.
+        self.update_submit.setEnabled(False)
         self.update_submit.setStatusTip("Check online for updates to the warrant builder and its resources.")
 
         self.update_quit = QPushButton()
@@ -1334,7 +1340,7 @@ class update_window(QMainWindow):
         print("Running update function")
         global public_key
 
-        prefix = "https://forrestcook.net/v208/"
+        prefix = "Insert web server address here"
         dest = "sources/"
         self.update_report.clear()
 
